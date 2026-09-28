@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MEGO RPG — Study · Pray · Level Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MEGO RPG — STYLE
+   ============================================================ */
+:root{
+  --bg:#0a0b0f; --p1:#111319; --p2:#171a23; --p3:#1d212c;
+  --line:rgba(203,211,228,.10); --line2:rgba(203,211,228,.18);
+  --txt:#e9e4d8; --dim:#9b968a; --faint:#6d695f;
+  --gold:#e0b35c; --gold2:#f2d492; --gold-dk:#8a6a2e;
+  --green:#8fbf74; --red:#d05a50; --hp:#c94b42;
+  --rare:#6ea8cf; --epic:#a98bd4; --leg:#e0b35c;
+  --fd:'Cinzel',serif; --fb:'Alegreya Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--fb); font-size:15px; line-height:1.5;
+  min-height:100vh; overflow-x:hidden;
+}
+/* subtle vignette + grain, kept very quiet */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.55) 100%);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");}
+::selection{background:rgba(224,179,92,.3)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:2px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#252a36;border:2px solid var(--bg);border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+h1,h2,h3,.fd{font-family:var(--fd)}
+button{font-family:var(--fb)}
+.ic{width:19px;height:19px;display:inline-block;vertical-align:-4px;flex:none}
+.ic-sm{width:15px;height:15px;vertical-align:-3px}
+.ic-lg{width:26px;height:26px;vertical-align:-6px}
+.dia{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);display:inline-block;margin:0 10px;opacity:.85;flex:none}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+
+/* ---------- shell ---------- */
+#app{position:relative;z-index:1;display:flex;min-height:100vh}
+#sidebar{width:248px;flex:none;border-right:1px solid var(--line);background:rgba(13,15,20,.6);
+  padding:22px 16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh}
+#main{flex:1;min-width:0;padding:26px 26px 60px;max-width:1060px;margin:0 auto;width:100%}
+
+.logo{display:flex;align-items:baseline;gap:8px;padding:2px 6px 14px;border-bottom:1px solid var(--line)}
+.logo b{font-family:var(--fd);font-weight:800;font-size:24px;letter-spacing:.06em;color:var(--gold2)}
+.logo span{font-family:var(--fd);font-size:13px;letter-spacing:.42em;color:var(--dim)}
+.logo em{font-style:normal;font-size:9px;letter-spacing:.3em;color:var(--gold);display:block}
+
+.sideprof{border:1px solid var(--line);background:var(--p1);padding:14px;display:flex;gap:12px;align-items:center}
+.sp-ava{flex:none}
+.sp-body{flex:1;min-width:0}
+.sp-name{font-family:var(--fd);font-weight:700;font-size:16px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-title{font-size:10px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin:1px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+nav.snav{display:flex;flex-direction:column;gap:3px}
+.nlink{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid transparent;background:none;
+  color:var(--dim);font-size:13.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-align:left;transition:.15s;position:relative}
+.nlink .ic{width:20px;height:20px}
+.nlink:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.nlink.on{color:var(--gold2);background:rgba(224,179,92,.07);border-color:rgba(224,179,92,.25)}
+.nlink.on::before{content:'';position:absolute;left:-1px;top:8px;bottom:8px;width:3px;background:var(--gold)}
+.sidefoot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--dim)}
+.sidefoot .row{display:flex;align-items:center;gap:8px}
+.sidefoot .row b{color:var(--txt);margin-left:auto;font-variant-numeric:tabular-nums}
+
+#topbar{display:none;position:sticky;top:0;z-index:40;background:rgba(10,11,15,.9);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 14px;align-items:center;gap:14px}
+#topbar .tbrand{font-family:var(--fd);font-weight:800;letter-spacing:.1em;color:var(--gold2);font-size:15px;margin-right:auto}
+.chip{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+.chip .ic{width:16px;height:16px}
+.chip.streak{color:#e8996b}.chip.coin{color:var(--gold2)}
+.iconbtn{background:none;border:1px solid var(--line);color:var(--dim);width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+.iconbtn:hover{color:var(--txt);border-color:var(--line2)}
+
+/* ---------- bottom nav (mobile) ---------- */
+#bnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(12,13,18,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav .bnrow{display:grid;grid-template-columns:repeat(6,1fr)}
+.bnav-b{background:none;border:none;color:var(--faint);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;position:relative}
+.bnav-b span{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.bnav-b .ic{width:21px;height:21px}
+.bnav-b.on{color:var(--gold2)}
+.bnav-b.on::after{content:'';position:absolute;top:-7px;width:5px;height:5px;background:var(--gold);transform:rotate(45deg)}
+
+/* ---------- panels ---------- */
+.tab{display:none;animation:tabIn .28s ease}
+.tab.on{display:block}
+@keyframes tabIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel{background:var(--p1);border:1px solid var(--line);padding:18px;position:relative}
+.panel+.panel,.gap{margin-top:16px}
+.cut{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.framed::before,.framed::after{content:'';position:absolute;width:13px;height:13px;border:2px solid var(--gold);opacity:.55;pointer-events:none}
+.framed::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.framed::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+.phd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.phd h2{font-size:14px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2)}
+.phd .ic{color:var(--gold)}
+.phd .right{margin-left:auto;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;font-size:11.5px;
+  padding:9px 15px;background:transparent;border:1px solid rgba(224,179,92,.45);color:var(--gold2);cursor:pointer;transition:.15s;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.btn:hover{background:rgba(224,179,92,.12);border-color:var(--gold)}
+.btn.solid{background:var(--gold);color:#181203;border-color:var(--gold)}
+.btn.solid:hover{background:var(--gold2)}
+.btn.ghost{border-color:var(--line2);color:var(--txt)}
+.btn.ghost:hover{background:rgba(255,255,255,.05)}
+.btn.danger{border-color:rgba(208,90,80,.55);color:#eb9d95}
+.btn.danger:hover{background:rgba(208,90,80,.12)}
+.btn.mini{padding:6px 10px;font-size:10.5px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:disabled:hover{background:transparent}
+
+/* ---------- bars ---------- */
+.bar{height:14px;background:#0c0e13;border:1px solid var(--line);position:relative;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--gold);transition:width .7s cubic-bezier(.2,.8,.2,1);position:relative;min-width:0}
+.bar>i::after{content:'';position:absolute;right:0;top:0;bottom:0;width:2px;background:rgba(255,255,255,.35)}
+.bar.hp>i{background:var(--hp)}
+.bar.grn>i{background:var(--green)}
+.bar.thin{height:8px}
+.bar.thin>i::after{display:none}
+.bartxt{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+
+/* ---------- hero ---------- */
+#hero{padding:20px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;pointer-events:none;opacity:.55;color:#cdd6ea}
+.hero-bg svg{position:absolute;inset:0;width:100%;height:100%}
+.hero-in{position:relative;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.avatar{position:relative;flex:none}
+.avatar svg{display:block;width:100%;height:auto}
+.pet-float{position:absolute;left:-8px;bottom:-4px;width:44px;animation:bob 3.4s ease-in-out infinite}
+.pet-float svg{width:100%;height:auto}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.aura-spin{transform-origin:70px 80px;animation:spin 24s linear infinite}
+.aura-spin.a2{animation-duration:38s;animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.h-id{flex:1;min-width:220px}
+.h-name{font-family:var(--fd);font-weight:800;font-size:clamp(26px,4vw,34px);letter-spacing:.05em;line-height:1.1}
+.h-title{display:flex;align-items:center;font-size:11px;letter-spacing:.26em;color:var(--gold);text-transform:uppercase;margin:4px 0 14px}
+.h-lvrow{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.h-lvrow b{font-family:var(--fd);font-size:13px;letter-spacing:.2em;color:var(--dim)}
+.h-lvrow b b2{color:var(--gold2)}
+.h-lvrow .lvnum{font-family:var(--fd);font-weight:800;font-size:26px;color:var(--gold2)}
+.h-xp{display:flex;align-items:center;gap:10px}
+.h-xp .bar{flex:1;max-width:340px}
+.h-stats{display:flex;flex-direction:column;gap:8px;min-width:130px}
+.hstat{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--p2);padding:7px 12px;font-weight:800;font-variant-numeric:tabular-nums}
+.hstat .ic{width:16px;height:16px}
+.hstat small{font-size:9.5px;letter-spacing:.16em;color:var(--dim);margin-left:auto;text-transform:uppercase;font-weight:800}
+.hstat.coin{color:var(--gold2)}.hstat.streak{color:#e8996b}.hstat.frz{color:#9fd0dd}
+
+.dispatch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--line);background:var(--p1);margin-top:16px;font-size:13.5px}
+.dispatch b{font-family:var(--fd);letter-spacing:.08em;color:var(--gold2)}
+.dispatch .cnt{margin-left:auto;color:var(--dim);font-variant-numeric:tabular-nums}
+.pd-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(143,191,116,.4);color:var(--green);padding:5px 11px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.reminder{display:flex;gap:10px;align-items:center;margin-top:16px;padding:12px 16px;border:1px solid rgba(224,179,92,.35);background:rgba(224,179,92,.06);font-size:13.5px}
+.reminder .ic{color:var(--gold);flex:none}
+.reminder button{margin-left:auto}
+
+.homegrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:16px;align-items:start}
+.hcol{display:flex;flex-direction:column;gap:16px}
+
+/* ---------- quests ---------- */
+.quest{display:flex;gap:13px;align-items:center;padding:13px 14px;border:1px solid var(--line);background:var(--p2);position:relative;transition:.2s}
+.quest+.quest{margin-top:9px}
+.q-ic{width:40px;height:40px;flex:none;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--gold);background:var(--p1)}
+.q-body{flex:1;min-width:0}
+.q-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.q-name{font-weight:800;font-size:14.5px}
+.tag-req{font-size:8.5px;font-weight:800;letter-spacing:.18em;color:#e8996b;border:1px solid rgba(232,153,107,.4);padding:2px 6px;text-transform:uppercase}
+.q-sub{font-size:12.5px;color:var(--dim);margin:1px 0 7px}
+.q-prog{display:flex;align-items:center;gap:9px}
+.q-prog .bar{flex:1;max-width:230px}
+.q-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.q-rew{font-size:11.5px;color:var(--dim);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.q-rew b{color:var(--gold2)}
+.quest.done{opacity:.55;border-color:rgba(143,191,116,.25)}
+.quest.done .q-ic{color:var(--green);border-color:rgba(143,191,116,.4)}
+.q-check{width:26px;height:26px;color:var(--green)}
+.quest.just-done{animation:stamp .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{0%{transform:scale(.97)}45%{transform:scale(1.025);border-color:var(--green)}100%{transform:scale(1)}}
+.bigcta{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid rgba(224,179,92,.3);background:linear-gradient(0deg,rgba(224,179,92,.05),rgba(224,179,92,.05)),var(--p1);margin-bottom:14px}
+.bigcta .ic{color:var(--gold)}
+.bigcta b{font-family:var(--fd);letter-spacing:.1em;font-size:15px;display:block}
+.bigcta small{color:var(--dim)}
+.bigcta .btn{margin-left:auto}
+
+/* ---------- prayer ---------- */
+.prow{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);background:var(--p2)}
+.prow+.prow{margin-top:8px}
+.prow .p-name{font-weight:800;letter-spacing:.06em;flex:1}
+.prow .p-ar{font-size:12px;color:var(--faint);font-style:italic}
+.pdot{width:26px;height:26px;border:1.5px solid var(--line2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--faint)}
+.prow.done .pdot{border-color:var(--green);color:var(--green);background:rgba(143,191,116,.1)}
+.prow.done .p-name{color:var(--green)}
+.pray-note{font-size:12.5px;color:var(--faint);font-style:italic;margin-top:12px}
+.week{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.wday{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;color:var(--faint);letter-spacing:.08em}
+.wdots{display:flex;gap:3px}
+.wdots i{width:7px;height:7px;border:1px solid var(--line2);transform:rotate(45deg);display:block}
+.wdots i.f{background:var(--green);border-color:var(--green)}
+.pray-mini{display:flex;gap:6px;align-items:center}
+.pray-mini i{width:9px;height:9px;border:1.5px solid var(--line2);transform:rotate(45deg);display:block}
+.pray-mini i.f{background:var(--green);border-color:var(--green)}
+
+/* ---------- bosses ---------- */
+.bossgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.bosscard{border:1px solid var(--line);background:var(--p1);padding:16px;text-align:center;position:relative;transition:.15s;cursor:pointer}
+.bosscard:hover{border-color:rgba(208,90,80,.45);transform:translateY(-2px)}
+.sigil{width:96px;height:96px;color:#d8cdb4;margin:2px auto 8px;display:block}
+.sigil .hexfr{stroke:rgba(208,90,80,.5)}
+.b-tier{position:absolute;top:10px;right:12px;font-family:var(--fd);font-size:12px;color:var(--red);letter-spacing:.14em}
+.b-name{font-family:var(--fd);font-weight:700;font-size:15px;letter-spacing:.1em;color:#e6d9c5}
+.b-subj{font-size:10.5px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin:2px 0 10px}
+.b-hp{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:6px;font-variant-numeric:tabular-nums}
+.boss-big{text-align:center}
+.boss-big .sigil{width:130px;height:130px}
+.b-flavor{font-size:12.5px;color:var(--dim);font-style:italic;margin:8px 0 16px}
+.boss-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.shake{animation:shk .45s}
+@keyframes shk{0%,100%{transform:none}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.hurt .sigil{color:#e88}
+
+/* ---------- inventory / shop ---------- */
+.subtabs{display:flex;gap:8px;margin-bottom:16px}
+.subtab{background:none;border:1px solid var(--line);color:var(--dim);padding:8px 16px;font-weight:800;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.subtab.on{color:var(--gold2);border-color:rgba(224,179,92,.45);background:rgba(224,179,92,.06)}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.item{border:1px solid var(--line);background:var(--p2);padding:14px 12px;text-align:center;display:flex;flex-direction:column;gap:5px;align-items:center}
+.item.r-rare{border-color:rgba(110,168,207,.35)} .item.r-epic{border-color:rgba(169,139,212,.4)} .item.r-legendary{border-color:rgba(224,179,92,.5)}
+.item.equipped{background:rgba(224,179,92,.05);border-color:rgba(224,179,92,.5)}
+.ivis{height:64px;display:flex;align-items:center;justify-content:center;color:var(--dim);margin-bottom:4px}
+.ivis .ic{width:34px;height:34px}
+.ivis svg.pet-tok{width:56px;height:56px}
+.ivis svg.wpn{height:58px}
+.i-name{font-weight:800;font-size:13.5px}
+.i-rar{font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+.r-common .i-rar,.i-rar.c{color:#9b968a}.r-rare .i-rar{color:var(--rare)}.r-epic .i-rar{color:var(--epic)}.r-legendary .i-rar{color:var(--gold)}
+.i-desc{font-size:11.5px;color:var(--faint);min-height:30px}
+.i-foot{margin-top:auto;padding-top:6px;display:flex;flex-direction:column;gap:6px;align-items:center;width:100%}
+.i-cost{font-size:12px;font-weight:800;color:var(--gold2);display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.i-lock{font-size:10px;color:var(--dim);letter-spacing:.08em;display:flex;align-items:center;gap:5px}
+
+/* ---------- profile / stats / achievements ---------- */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);background:var(--p2);padding:12px 14px}
+.stat b{font-family:var(--fd);font-size:20px;color:var(--gold2);display:block;font-variant-numeric:tabular-nums}
+.stat span{font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;font-weight:800}
+.achgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.ach{border:1px solid var(--line);background:var(--p2);padding:13px;display:flex;gap:11px;align-items:center}
+.ach .a-ic{width:38px;height:38px;flex:none;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.ach b{font-size:13.5px;display:block;font-family:var(--fd);letter-spacing:.05em}
+.ach span{font-size:11.5px;color:var(--dim)}
+.ach.locked{opacity:.5}
+.ach.locked .a-ic{color:var(--faint)}
+.ach.unlocked{border-color:rgba(224,179,92,.35)}
+.custom-grid{display:flex;flex-direction:column;gap:12px}
+.cust-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cust-row .lbl{width:84px;flex:none}
+.pill{background:var(--p2);border:1px solid var(--line);color:var(--dim);padding:6px 11px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.pill:hover{color:var(--txt);border-color:var(--line2)}
+.pill.on{color:var(--gold2);border-color:rgba(224,179,92,.5);background:rgba(224,179,92,.07)}
+
+/* ---------- settings ---------- */
+.setrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:none}
+.setrow .s-info{flex:1}
+.setrow b{font-size:14px;display:block}
+.setrow span{font-size:12px;color:var(--dim)}
+.switch{width:44px;height:24px;border:1px solid var(--line2);background:var(--p2);position:relative;cursor:pointer;flex:none}
+.switch i{position:absolute;top:3px;left:3px;width:16px;height:16px;background:var(--faint);transition:.18s}
+.switch.on i{left:23px;background:var(--gold)}
+input[type=text]{background:var(--p2);border:1px solid var(--line2);color:var(--txt);padding:9px 12px;font-family:var(--fb);font-size:14px;width:200px;max-width:100%}
+input[type=text]:focus{outline:none;border-color:var(--gold)}
+
+/* ---------- modals / toasts / fx ---------- */
+.mwrap{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px;opacity:0;transition:opacity .18s}
+.mwrap.on{opacity:1}
+.mback{position:absolute;inset:0;background:rgba(5,6,9,.78);backdrop-filter:blur(3px)}
+.modal{position:relative;background:var(--p1);border:1px solid var(--line2);padding:24px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
+  clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
+.m-title{font-family:var(--fd);font-weight:700;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.m-title .ic{color:var(--gold)}
+.m-body{color:var(--dim);font-size:13.5px;margin-bottom:16px}
+.m-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:16px}
+.pickb{background:var(--p2);border:1px solid var(--line);color:var(--txt);padding:11px 8px;font-weight:700;font-size:12.5px;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center}
+.pickb .ic{color:var(--gold)}
+.pickb.on{border-color:var(--gold);color:var(--gold2);background:rgba(224,179,92,.07)}
+.dursegs{display:flex;gap:8px;margin-bottom:18px}
+.dursegs .btn{flex:1;justify-content:center}
+.tclock{display:flex;flex-direction:column;align-items:center;gap:10px;margin:6px 0 18px;position:relative}
+.tring{width:190px;height:190px;transform:rotate(-90deg)}
+.tring .trk{fill:none;stroke:#1b1f29;stroke-width:7}
+.tring .tvl{fill:none;stroke:var(--gold);stroke-width:7;stroke-linecap:butt;transition:stroke-dashoffset .3s linear}
+.ttime{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ttime b{font-family:var(--fd);font-size:34px;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.ttime span{font-size:10px;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+#toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:150;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(94vw,460px)}
+.toast{display:flex;align-items:center;gap:10px;background:rgba(19,21,28,.97);border:1px solid var(--line2);padding:11px 16px;font-size:13.5px;font-weight:700;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);animation:tIn .25s ease;max-width:100%}
+.toast .ic{color:var(--gold);flex:none}
+.toast.gold{border-color:rgba(224,179,92,.55)} .toast.gold .ic{color:var(--gold2)}
+.toast.green{border-color:rgba(143,191,116,.5)} .toast.green .ic{color:var(--green)}
+.toast.red{border-color:rgba(208,90,80,.5)} .toast.red .ic{color:var(--red)}
+.toast.out{opacity:0;transform:translateY(-8px);transition:.4s}
+@keyframes tIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.ftxt{position:fixed;z-index:160;transform:translateX(-50%);font-family:var(--fd);font-weight:800;font-size:17px;color:var(--gold2);
+  pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,.8);animation:rise 1.25s ease-out forwards;letter-spacing:.06em;white-space:nowrap}
+.ftxt.grn{color:var(--green)}.ftxt.red{color:#e88}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,6px)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-58px)}}
+
+/* level up */
+#lvlup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(6,7,10,.9);overflow:hidden}
+#lvlup.on{display:flex}
+.rays{position:absolute;inset:-40%;background:repeating-conic-gradient(from 0deg,rgba(224,179,92,.10) 0 5deg,transparent 5deg 13deg);
+  animation:spin 30s linear infinite;-webkit-mask-image:radial-gradient(circle,black 0%,transparent 62%);mask-image:radial-gradient(circle,black 0%,transparent 62%)}
+.lvl-in{position:relative;text-align:center;animation:lvlpop .6s cubic-bezier(.2,1.5,.4,1)}
+@keyframes lvlpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.lvl-cap{font-size:13px;letter-spacing:.6em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.lvl-word{font-family:var(--fd);font-weight:800;font-size:clamp(38px,8vw,64px);letter-spacing:.14em;color:var(--gold2);text-transform:uppercase}
+.lvl-num{font-family:var(--fd);font-weight:800;font-size:clamp(80px,18vw,150px);line-height:1;color:var(--txt);margin:6px 0 10px}
+.lvl-rew{font-size:14px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:800;margin-bottom:26px}
+.mote{position:absolute;width:4px;height:4px;background:var(--gold2);transform:rotate(45deg);animation:mote 2.2s ease-in infinite;opacity:0}
+@keyframes mote{0%{opacity:0;transform:translateY(20px) rotate(45deg)}30%{opacity:.9}100%{opacity:0;transform:translateY(-130px) rotate(45deg)}}
+
+/* intro */
+#intro{position:fixed;inset:0;z-index:210;background:var(--bg);display:none;align-items:center;justify-content:center;text-align:center;padding:24px}
+#intro.on{display:flex}
+.in-brand b{font-family:var(--fd);font-weight:800;font-size:clamp(54px,13vw,96px);letter-spacing:.14em;color:var(--gold2);display:block;line-height:1}
+.in-brand span{font-family:var(--fd);font-size:clamp(15px,3.4vw,22px);letter-spacing:.75em;color:var(--dim);display:block;margin:4px 0 14px}
+.in-tag{font-size:11px;letter-spacing:.34em;color:var(--gold);text-transform:uppercase;margin-bottom:36px;display:flex;align-items:center;justify-content:center}
+#intro input{width:min(300px,80vw);text-align:center;font-size:17px;margin-bottom:14px}
+.in-hint{font-size:12px;color:var(--faint);margin-top:20px;font-style:italic}
+
+/* timer chip */
+#tchip{display:none;position:fixed;left:14px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;align-items:center;gap:8px;
+  background:rgba(19,21,28,.97);border:1px solid rgba(224,179,92,.5);padding:9px 14px;font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--gold2);cursor:pointer;font-size:14px}
+#tchip.on{display:flex}
+@media (min-width:921px){#tchip{bottom:20px}}
+
+/* ---------- responsive ---------- */
+@media (max-width:920px){
+  #sidebar{display:none}
+  #topbar{display:flex}
+  #bnav{display:block}
+  #main{padding:16px 14px 96px}
+  .homegrid{grid-template-columns:1fr}
+  .hero-in{gap:14px}
+  .h-stats{flex-direction:row;flex-wrap:wrap;width:100%}
+  .hstat{flex:1;min-width:120px;justify-content:center}
+  .sigil{width:78px;height:78px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== SVG ICON SPRITE (hand-drawn) ======== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h4.5V15h3v5H18V9.5"/></symbol>
+<symbol id="i-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h3.2L18 14.8l-3.2 3.2L4 7.2V4z"/><path d="M20 4h-3.2L6 14.8l3.2 3.2L20 7.2V4z"/></symbol>
+<symbol id="i-mosque" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21v-7c0-4 3.4-6.2 7-9 3.6 2.8 7 5 7 9v7H5z"/><path d="M10 21v-3.2c0-1.2.8-2 2-2s2 .8 2 2V21"/><path d="M13.4 1.6a2.3 2.3 0 1 0 1.5 4A2.8 2.8 0 1 1 13.4 1.6z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-skull" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h8v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7z"/><path d="M10 19v2M14 19v2M12 13l-1 2h2l-1-2z"/><circle cx="9.4" cy="10.4" r="1.4" fill="currentColor" stroke="none"/><circle cx="14.6" cy="10.4" r="1.4" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8V6a4 4 0 0 1 8 0v2"/><path d="M5 8h14v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V8z"/><path d="M9 13h6v4H9z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><path d="M12 8l3 4-3 4-3-4 3-4z"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.6 3.4-4 5.4-4 9.4a4.2 4.2 0 0 0 8.4.3C16.4 9 12.6 8 12 3z"/><path d="M12 13.4c-.9 1-1.6 1.7-1.6 2.8a1.6 1.6 0 0 0 3.2.1c0-1.1-.7-1.8-1.6-2.9z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-4.5-2-8-2v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2V4c-3.5 0-6 .5-8 2z"/><path d="M12 6v14"/></symbol>
+<symbol id="i-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h11v14a4 4 0 0 1-4 4H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M7 3v14h10"/><path d="M11 8h4M11 11h3"/></symbol>
+<symbol id="i-divide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 12h14"/><circle cx="12" cy="6.4" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="17.6" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3h5M10.5 3v5.2L5.6 16a3 3 0 0 0 2.6 4.5h7.6a3 3 0 0 0 2.6-4.5l-4.9-7.8V3"/><circle cx="10.5" cy="16" r=".9" fill="currentColor" stroke="none"/><circle cx="13.6" cy="17.8" r=".7" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M15.6 8.4l-1.9 5.3-5.3 1.9 1.9-5.3 5.3-1.9z"/></symbol>
+<symbol id="i-dumbbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6.5 7v10M9.5 9.5v5M14.5 9.5v5M17.5 7v10M9.5 12h5M3 12h3.5M17.5 12H21"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.2"/><path d="M12 10v3.5l2.4 2M10 2.5h4M12 2.5V5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5"/><rect x="6" y="10.5" width="12" height="9.5"/></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5l4.4 3L12 5.5l4.1 7 4.4-3-1.8 9.5H5.3L3.5 9.5z"/><path d="M6 21h12"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.6" cy="9.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="7.6" r="1.5" fill="currentColor" stroke="none"/><circle cx="17.4" cy="9.4" r="1.5" fill="currentColor" stroke="none"/><path d="M12 12.4c-2.7 0-5 2-5 4.3 0 1.5 1.1 2.6 2.6 2.6 1 0 1.6-.4 2.4-.4s1.4.4 2.4.4c1.5 0 2.6-1.1 2.6-2.6 0-2.3-2.3-4.3-5-4.3z"/></symbol>
+<symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10l4 5-9 11L3 9l4-5z"/><path d="M3 9h18M12 20L8.5 9l3.5-5 3.5 5L12 20"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.9 5.1L19 11l-5.1 1.9L12 18l-1.9-5.1L5 11l5.1-1.9L12 4z"/><path d="M18.5 3.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H5a3 3 0 0 0 3 4.4M16 5h3a3 3 0 0 1-3 4.4"/><path d="M12 13v3M9 20h6M10.5 16h3v4h-3z"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.1 2.6 2.8-.6 1 2.7 2.7 1-.6 2.8 2.2 1.7-2.2 1.7.6 2.8-2.7 1-1 2.7-2.8-.6L12 21.2l-1.1-2.6-2.8.6-1-2.7-2.7-1 .6-2.8L2.8 12l2.2-1.7-.6-2.8 2.7-1 1-2.7 2.8.6L12 2.8z"/></symbol>
+<symbol id="i-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/><path d="M16 9.5a3.6 3.6 0 0 1 0 5M18.6 7a7 7 0 0 1 0 10"/></symbol>
+<symbol id="i-volx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7V5z" fill="currentColor"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5h2.8v14H8zM13.2 5H16v14h-2.8z" fill="currentColor"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-export" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 11l4.5 4.5L16.5 11M5 20h14"/></symbol>
+<symbol id="i-import" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.8V11c0 4.8-3.4 7.8-7 10-3.6-2.2-7-5.2-7-10V5.8L12 3z"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M13 2L5.5 13H11l-1.5 9L18 10.5h-5.5L13 2z"/></symbol>
+</defs>
+</svg>
+
+<div id="app">
+  <!-- ======== SIDEBAR (desktop) ======== -->
+  <aside id="sidebar">
+    <div class="logo"><div><b>MEGO</b><em>STUDY · PRAY · LEVEL UP</em></div><span>RPG</span></div>
+    <div id="side-prof"></div>
+    <nav class="snav" id="snav"></nav>
+    <div class="sidefoot">
+      <div class="row"><svg class="ic ic-sm" style="color:#9fd0dd"><use href="#i-snow"/></svg>Streak Freezes<b id="sf-frz">0</b></div>
+      <div class="row"><svg class="ic ic-sm" style="color:var(--gold)"><use href="#i-coin"/></svg>Coins<b id="sf-coin">0</b></div>
+      <div class="row"><svg class="ic ic-sm" style="color:#e8996b"><use href="#i-flame"/></svg>Day Streak<b id="sf-strk">0</b></div>
+    </div>
+  </aside>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <!-- ======== TOP BAR (mobile) ======== -->
+    <header id="topbar">
+      <span class="tbrand">MEGO</span>
+      <span class="chip streak"><svg class="ic"><use href="#i-flame"/></svg><b id="tb-strk">0</b></span>
+      <span class="chip coin"><svg class="ic"><use href="#i-coin"/></svg><b id="tb-coin">0</b></span>
+      <button class="iconbtn" data-action="sound" id="tb-snd" aria-label="Toggle sound"><svg class="ic"><use href="#i-volx"/></svg></button>
+      <button class="iconbtn" data-action="tab" data-tab="profile" aria-label="Settings"><svg class="ic"><use href="#i-gear"/></svg></button>
+    </header>
+
+    <!-- ======== MAIN ======== -->
+    <main id="main">
+      <section class="tab on" id="tab-home"></section>
+      <section class="tab" id="tab-quests"></section>
+      <section class="tab" id="tab-prayer"></section>
+      <section class="tab" id="tab-bosses"></section>
+      <section class="tab" id="tab-inventory"></section>
+      <section class="tab" id="tab-profile"></section>
+    </main>
+  </div>
+</div>
+
+<!-- ======== BOTTOM NAV (mobile) ======== -->
+<nav id="bnav"><div class="bnrow" id="bnavrow"></div></nav>
+
+<div id="toasts" aria-live="polite"></div>
+<div id="lvlup"></div>
+<div id="intro"></div>
+<button id="tchip" data-action="timerchip"></button>
+<input type="file" id="importfile" accept="application/json" style="display:none" aria-hidden="true">
+
+<script>
+'use strict';
+/* ============================================================
+   MEGO RPG — GAME SCRIPT
+   Modules: Utils · Data · Storage · DayLoop · Sfx · Fx ·
+            Systems (XP/Quests/Prayer/Streak/Boss/Inv/Ach) ·
+            Timer · Renderers · Router · Init
+   ============================================================ */
+
+/* ---------------- utils ---------------- */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const clamp = (n,a,b) => Math.min(b, Math.max(a,n));
+const todayStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function daysBetween(a, b){
+  const p = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+  return Math.round((p(b) - p(a)) / 864e5);
+}
+const dayOfYear = () => { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(),0,0)) / 864e5); };
+const ROMAN = ['','II','III','IV','V','VI','VII','VIII','IX','X+'];
+const icon = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const fmtH = sec => `${Math.floor(sec/3600)}h ${Math.floor(sec%3600/60)}m`;
+
+/* ---------------- static data ---------------- */
+const SUBJECTS = [
+  { id:'arabic',  name:'Arabic',         icon:'scroll',   boss:'THE GRAMMAR KING',   flavor:'Every rule mastered is a crown reclaimed.' },
+  { id:'english', name:'English',        icon:'book',     boss:'THE WORD MASTER',    flavor:' Vocabulary is ammunition. Load it well.' },
+  { id:'math',    name:'Mathematics',    icon:'divide',   boss:'THE FINAL EQUATION', flavor:'It watches. It waits. Solve it.' },
+  { id:'science', name:'Science',        icon:'flask',    boss:'MAD SCIENTIST',      flavor:'His experiments end where your curiosity begins.' },
+  { id:'social',  name:'Social Studies', icon:'compass',  boss:'THE EXPLORER',       flavor:'Maps of the old world chart your path forward.' },
+];
+
+const CORE_QUESTS = [
+  { id:'study25', icon:'timer',   name:'Study 25 Minutes',        desc:'Focus session on any subject',        xp:20,  coins:10, target:25, unit:'min', required:true,  act:'session' },
+  { id:'prayers5',icon:'mosque',  name:'Complete the 5 Prayers',  desc:'Fajr · Dhuhr · Asr · Maghrib · Isha', xp:15,  coins:5,  target:5,  unit:'/5',  act:'goto-prayer' },
+  { id:'exercise',icon:'dumbbell',name:'Exercise 15 Minutes',     desc:'Walk, run, lift — anything counts',   xp:10,  coins:5,  target:15, unit:'min', act:'log', logLabel:'Log 15 min' },
+  { id:'read',    icon:'book',    name:'Read 10 Pages',           desc:'Any book, any page',                  xp:10,  coins:5,  target:10, unit:'pg',  act:'log', logLabel:'Log 10 pages' },
+];
+const BONUS_QUESTS = [
+  { id:'study50',  icon:'timer',   name:'Deep Study — 50 Minutes', desc:'Extended focus session',            xp:40, coins:15, target:50, unit:'min', act:'session' },
+  { id:'workout30',icon:'dumbbell',name:'Full Workout — 30 Minutes',desc:'Push a little further today',      xp:20, coins:10, target:30, unit:'min', act:'log', logLabel:'Log 30 min' },
+  { id:'tidy',     icon:'sparkle', name:'Tidy Your Room',          desc:'A clean space, a clear mind',       xp:5,  coins:2,  target:1,  unit:'',    act:'log', logLabel:'Mark done' },
+  { id:'challenge',icon:'target',  name:'Difficult Challenge',     desc:'A hard exam, a fear faced, a wall climbed', xp:100, coins:40, target:1, unit:'', act:'challenge' },
+];
+function bonusToday(){
+  const d = dayOfYear(), pool = BONUS_QUESTS;
+  const a = pool[d % pool.length];
+  let b = pool[(d*3 + 1) % pool.length];
+  if (b.id === a.id) b = pool[(d + 2) % pool.length];
+  return [a, b];
+}
+const ALL_QUESTS = () => [...CORE_QUESTS, ...bonusToday()];
+const questDef = id => ALL_QUESTS().find(q => q.id === id);
+
+const MILESTONES = [
+  { d:3,   kind:'coins', amt:50,  label:'+50 Coins' },
+  { d:7,   kind:'item',  id:'outfit_sunforged',   label:'Sunforged Garb unlocked' },
+  { d:14,  kind:'item',  id:'pet_wolf',           label:'Fenrir Wolf unlocked' },
+  { d:30,  kind:'item',  id:'sword_dawn',         label:'Dawnbreaker unlocked' },
+  { d:60,  kind:'title', id:'title_streakmaster', label:'Title earned — STREAK MASTER' },
+  { d:100, kind:'title', id:'title_grinder',      label:'Title earned — LEGENDARY GRINDER' },
+];
+
+const PRAYERS = [
+  { id:'fajr',    name:'Fajr',    ar:'Fajr' },
+  { id:'dhuhr',   name:'Dhuhr',   ar:'Dhuhr' },
+  { id:'asr',     name:'Asr',     ar:'Asr' },
+  { id:'maghrib', name:'Maghrib', ar:'Maghrib' },
+  { id:'isha',    name:'Isha',    ar:'Isha' },
+];
+
+const RARITY = { common:'Common', rare:'Rare', epic:'Epic', legendary:'Legendary' };
+const ITEMS = {
+  weapon:{ label:'Weapons', list:[
+    { id:'sword_rusty', name:'Iron Sword',     rarity:'common',    cost:0,   desc:'A beginner\u2019s blade. Honest steel.' },
+    { id:'axe_shadow',  name:'Shadow Axe',     rarity:'rare',      cost:250, desc:'Cut through doubt like timber.' },
+    { id:'staff_ember', name:'Ember Staff',    rarity:'rare',      cost:300, desc:'It hums with quiet late-night focus.' },
+    { id:'blade_frost', name:'Frostbrand',     rarity:'epic',      cost:450, desc:'Cold, precise, unbreakable.' },
+    { id:'sword_dawn',  name:'Dawnbreaker',    rarity:'legendary', cost:null, lock:'30-day streak', desc:'Forged from thirty unbroken mornings.' },
+  ]},
+  outfit:{ label:'Outfits', list:[
+    { id:'outfit_traveler', name:'Traveler\u2019s Cloak', rarity:'common', cost:0,   desc:'Dust of many roads.' },
+    { id:'outfit_scholar',  name:'Scholar Robes',         rarity:'rare',   cost:200, desc:'Smells faintly of old paper.' },
+    { id:'outfit_night',    name:'Nightwatch Set',        rarity:'epic',   cost:350, desc:'For those who keep their vows after dark.' },
+    { id:'outfit_sunforged',name:'Sunforged Garb',        rarity:'epic',   cost:null, lock:'7-day streak', desc:'Woven from a week of kept promises.' },
+  ]},
+  pet:{ label:'Pets', list:[
+    { id:'pet_cat',    name:'Alley Cat',        rarity:'common',    cost:150, desc:'Judges your schedule silently.' },
+    { id:'pet_fox',    name:'Ember Fox',        rarity:'rare',      cost:300, desc:'Quick, clever, always one page ahead.' },
+    { id:'pet_eagle',  name:'Storm Eagle',      rarity:'epic',      cost:400, desc:'Sees your goals from very far away.' },
+    { id:'pet_wolf',   name:'Fenrir Wolf',      rarity:'epic',      cost:null, lock:'14-day streak', desc:'Loyal to those who show up daily.' },
+    { id:'pet_dragon', name:'Hatchling Dragon', rarity:'legendary', cost:800, desc:'Small now. So are your excuses.' },
+  ]},
+  aura:{ label:'Auras', list:[
+    { id:'aura_ember',  name:'Ember Aura',  rarity:'rare', cost:250, desc:'A warm ring of quiet determination.' },
+    { id:'aura_frost',  name:'Frost Aura',  rarity:'rare', cost:250, desc:'Composure, made visible.' },
+    { id:'aura_gilded', name:'Gilded Aura', rarity:'legendary', cost:null, lock:'100-day streak', desc:'For legends of consistency.' },
+  ]},
+  background:{ label:'Backgrounds', list:[
+    { id:'bg_grove',  name:'Whispering Grove', rarity:'common', cost:0,   desc:'Trees that keep your secrets.' },
+    { id:'bg_ruins',  name:'Forgotten Ruins',  rarity:'rare',   cost:200, desc:'Old stones, older lessons.' },
+    { id:'bg_vault',  name:'Ancient Vault',    rarity:'epic',   cost:300, desc:'Knowledge locked away, waiting.' },
+    { id:'bg_nebula', name:'Star Wastes',      rarity:'epic',   cost:350, desc:'Study under dying stars.' },
+  ]},
+  title:{ label:'Titles', list:[
+    { id:'title_novice',       name:'Novice of the Dawn',   rarity:'common',    cost:0 },
+    { id:'title_diligent',     name:'The Diligent',         rarity:'rare',      cost:120 },
+    { id:'title_scholar',      name:'Scholar of Ages',      rarity:'rare',      cost:250 },
+    { id:'title_bossy',        name:'Boss Slayer',          rarity:'epic',      cost:null, lock:'Defeat a Boss' },
+    { id:'title_streakmaster', name:'Streak Master',        rarity:'epic',      cost:null, lock:'60-day streak' },
+    { id:'title_grinder',      name:'Legendary Grinder',    rarity:'legendary', cost:null, lock:'100-day streak' },
+  ]},
+};
+const ALL_ITEMS = Object.entries(ITEMS).flatMap(([cat, g]) => g.list.map(i => ({...i, cat})));
+const itemDef = id => ALL_ITEMS.find(i => i.id === id);
+
+const ACHIEVEMENTS = [
+  { id:'first',    icon:'check',  name:'First Step',    desc:'Complete your first quest',      test: s => s.stats.quests >= 1 },
+  { id:'grinder',  icon:'swords', name:'Grinder',       desc:'Complete 50 quests',             test: s => s.stats.quests >= 50 },
+  { id:'scholar',  icon:'book',   name:'Scholar',       desc:'Study for 10 total hours',       test: s => s.stats.studySec >= 36000 },
+  { id:'streak30', icon:'flame',  name:'Streak Master', desc:'Reach a 30-day streak',          test: s => s.streak.best >= 30 },
+  { id:'slayer',   icon:'skull',  name:'Boss Slayer',   desc:'Defeat your first Boss',         test: s => s.stats.bosses >= 1 },
+  { id:'legend',   icon:'crown',  name:'Legendary',     desc:'Reach Level 50',                 test: s => s.player.level >= 50 },
+  { id:'devotion', icon:'mosque', name:'Steadfast',     desc:'Complete 100 prayers',           test: s => s.stats.prayers >= 100 },
+  { id:'perfect',  icon:'sparkle',name:'Flawless Day',  desc:'Earn a Perfect Day',             test: s => (s.stats.perfectDays||0) >= 1 },
+  { id:'wealth',   icon:'coin',   name:'Gilded',        desc:'Hold 1,000 coins at once',       test: s => s.player.coins >= 1000 },
+  { id:'tamer',    icon:'paw',    name:'Tamer',         desc:'Adopt a pet companion',          test: s => !!s.inv.equipped.pet },
+];
+
+/* ---------------- art: avatar / pets / weapons / sigils / backgrounds ---------------- */
+const OUTFIT_COLORS = {
+  outfit_traveler:{ cloak:'#3b4150', hood:'#262b38', trim:'#98a0ad' },
+  outfit_scholar: { cloak:'#2f4a3e', hood:'#1f332b', trim:'#c2a86a' },
+  outfit_night:   { cloak:'#232837', hood:'#171b26', trim:'#9fb4c9' },
+  outfit_sunforged:{cloak:'#4f3d22', hood:'#332816', trim:'#e2b45f' },
+};
+const WEAPON_ART = {
+  sword_rusty: `<path d="M0 -44 L4.5 -35 L4.5 -7 L-4.5 -7 L-4.5 -35 Z" fill="#8f96a3"/><path d="M0 -44 L0 -7" stroke="#6d7480" stroke-width="1.4"/><rect x="-9" y="-7" width="18" height="3.6" fill="#7a6236"/><rect x="-1.8" y="-3.4" width="3.6" height="12" fill="#5c4a28"/><circle cy="10.5" r="3" fill="#7a6236"/>`,
+  axe_shadow:  `<rect x="-1.8" y="-42" width="3.6" height="52" fill="#4a4034"/><path d="M1.8 -40 C12 -42 18 -34 17 -24 C10 -27 4 -26 1.8 -22 Z" fill="#565d6e"/><path d="M-1.8 -40 C-9 -41 -13 -35 -12 -28 C-7 -30 -4 -28 -1.8 -25 Z" fill="#414855"/>`,
+  staff_ember: `<rect x="-1.8" y="-40" width="3.6" height="52" fill="#5c4630"/><circle cy="-44" r="6.5" fill="#d97b4a"/><circle cy="-44" r="3" fill="#f2c892"/><path d="M-5 -37 L5 -37" stroke="#8a6a2e" stroke-width="2"/>`,
+  blade_frost: `<path d="M0 -46 L4.5 -36 L4.5 -7 L-4.5 -7 L-4.5 -36 Z" fill="#b9d6e4"/><path d="M0 -46 L0 -7" stroke="#7fa8bd" stroke-width="1.4"/><path d="M0 -46 L4.5 -36 L0 -30 Z" fill="#e2f1f8"/><rect x="-9" y="-7" width="18" height="3.6" fill="#5f7f91"/><rect x="-1.8" y="-3.4" width="3.6" height="12" fill="#3e5560"/><circle cy="10.5" r="3" fill="#5f7f91"/>`,
+  sword_dawn:  `<path d="M0 -48 L5 -37 L5 -7 L-5 -7 L-5 -37 Z" fill="#e8c377"/><path d="M0 -48 L0 -7" stroke="#b08b3e" stroke-width="1.4"/><path d="M0 -48 L5 -37 L0 -29 Z" fill="#f7e3b2"/><rect x="-10" y="-7" width="20" height="4" fill="#8a6a2e"/><rect x="-2" y="-3.4" width="4" height="13" fill="#6d5426"/><circle cy="11.5" r="3.4" fill="#e8c377"/>`,
+};
+const AURA_ART = { aura_ember:'#d97b4a', aura_frost:'#7fb6c9', aura_gilded:'#e2b45f' };
+const PET_ART = {
+  pet_cat:  { c:'#8d93a1', s:`<path d="M17 22 L20 8 L27 16 Z" fill="#8d93a1"/><path d="M39 22 L36 8 L29 16 Z" fill="#8d93a1"/><path d="M28 13 C39 13 44 21 44 30 C44 40 37 46 28 46 C19 46 12 40 12 30 C12 21 17 13 28 13 Z" fill="#8d93a1"/><circle cx="22.5" cy="29" r="1.8" fill="#14161c"/><circle cx="33.5" cy="29" r="1.8" fill="#14161c"/><path d="M26 36 h4" stroke="#14161c" stroke-width="1.4"/>` },
+  pet_fox:  { c:'#c67b3f', s:`<path d="M16 22 L19 7 L27 15 Z" fill="#c67b3f"/><path d="M40 22 L37 7 L29 15 Z" fill="#c67b3f"/><path d="M28 13 C40 13 45 22 45 31 C45 41 37 47 28 47 C19 47 11 41 11 31 C11 22 16 13 28 13 Z" fill="#c67b3f"/><ellipse cx="28" cy="41" rx="7.5" ry="5.5" fill="#ead9c2"/><circle cx="28" cy="39.5" r="1.6" fill="#14161c"/><circle cx="21.5" cy="28" r="1.8" fill="#14161c"/><circle cx="34.5" cy="28" r="1.8" fill="#14161c"/>` },
+  pet_wolf: { c:'#7d8595', s:`<path d="M17 25 L12 9 L25 17 Z" fill="#7d8595"/><path d="M39 25 L44 9 L31 17 Z" fill="#7d8595"/><path d="M28 14 C39 14 45 22 45 32 C45 41 38 47 28 47 C18 47 11 41 11 32 C11 22 17 14 28 14 Z" fill="#7d8595"/><circle cx="22" cy="30" r="1.8" fill="#14161c"/><circle cx="34" cy="30" r="1.8" fill="#14161c"/><path d="M24 40 L28 43 L32 40" fill="none" stroke="#14161c" stroke-width="1.4"/><path d="M20 24 L23 30 M36 24 L33 30" stroke="#626a79" stroke-width="1.3"/>` },
+  pet_dragon:{ c:'#5f9e6e', s:`<path d="M18 17 L11 6 L25 12 Z" fill="#5f9e6e"/><path d="M38 17 L45 6 L31 12 Z" fill="#5f9e6e"/><path d="M28 15 C40 15 46 24 44 33 C43 40 36 46 28 46 C20 46 13 40 12 33 C10 24 16 15 28 15 Z" fill="#5f9e6e"/><circle cx="22.5" cy="29" r="1.9" fill="#f2d492"/><circle cx="33.5" cy="29" r="1.9" fill="#f2d492"/><circle cx="25.5" cy="39" r="1" fill="#14161c"/><circle cx="30.5" cy="39" r="1" fill="#14161c"/><path d="M12 33 L8 36 M44 33 L48 36" stroke="#3f7350" stroke-width="2"/>` },
+  pet_eagle:{ c:'#a9865a', s:`<path d="M28 12 C39 12 45 20 44 28 C43 37 36 45 28 45 C20 45 13 37 12 28 C11 20 17 12 28 12 Z" fill="#a9865a"/><path d="M28 31 C33 31 36 34.5 34 39 L28 45 L24.5 37 Z" fill="#d9a441"/><circle cx="28" cy="44.5" r="1.4" fill="#8a6224"/><path d="M17 24 L24 26 M39 24 L32 26" stroke="#7d5c34" stroke-width="1.6"/><circle cx="22.5" cy="27" r="1.7" fill="#14161c"/><circle cx="33.5" cy="27" r="1.7" fill="#14161c"/>` },
+};
+const SIGILS = {
+  math:    `<path d="M50 22 L80 74 L20 74 Z" fill="none"/><path d="M36 58 C41 50 59 50 64 58 C59 64 41 64 36 58 Z" fill="none"/><circle cx="50" cy="57" r="3" fill="currentColor"/><path d="M33 84 h11 M56 84 h11 M44 84 h12" opacity=".55"/>`,
+  science: `<path d="M44 20 h12 M46 20 v14 L31 60 a9 9 0 0 0 8 13 h22 a9 9 0 0 0 8 -13 L54 34 V20" fill="none"/><circle cx="45" cy="56" r="3" fill="currentColor"/><circle cx="55" cy="63" r="2.2" fill="currentColor"/><path d="M51 38 L45 49 h7 L46 61" fill="none"/>`,
+  social:  `<circle cx="50" cy="50" r="27" fill="none"/><path d="M50 25 L55.5 50 L50 75 L44.5 50 Z" fill="currentColor" opacity=".9"/><path d="M25 50 L50 44.5 L75 50 L50 55.5 Z" fill="currentColor" opacity=".4"/>`,
+  arabic:  `<path d="M28 56 L24 33 L38 44 L50 27 L62 44 L76 33 L72 56 Z" fill="none"/><path d="M26 62 h48"/><path d="M28 78 C36 70 42 84 50 76 C58 68 64 84 72 76" fill="none"/>`,
+  english: `<path d="M50 34 C42 27 30 27 23 31 V68 C30 64 42 64 50 71 C58 64 70 64 77 68 V31 C70 27 58 27 50 34 Z" fill="none"/><path d="M50 34 V71"/><path d="M69 24 L83 10 M83 10 l-1.5 7.5 M83 10 l-7.5 1.5" fill="none"/>`,
+};
+const BG_ART = {
+  bg_grove: `<g fill="none" stroke="currentColor" stroke-width="1.6" opacity=".8"><path d="M40 320 V210 C30 190 28 160 34 130 M40 240 C58 224 64 200 62 176 M40 280 C22 268 16 250 18 232"/><path d="M420 320 V180 C432 158 434 128 428 96 M420 220 C400 208 394 186 396 164 M420 270 C438 260 444 242 442 226"/></g><g fill="currentColor"><circle cx="120" cy="180" r="1.6"/><circle cx="240" cy="120" r="1.6"/><circle cx="330" cy="200" r="1.6"/><circle cx="180" cy="90" r="1.3"/><circle cx="390" cy="70" r="1.3"/></g>`,
+  bg_ruins: `<g fill="none" stroke="currentColor" stroke-width="1.6" opacity=".8"><path d="M80 320 V140 h26 V320 M260 320 V120 h30 V320 M350 320 V160 h22 V320"/><path d="M70 140 h46 M250 120 h50 M344 160 h34" /><path d="M150 320 V60 M130 60 h40 M150 100 l-14 14 M150 100 l14 14"/></g><g fill="currentColor"><circle cx="220" cy="90" r="1.6"/><circle cx="300" cy="70" r="1.4"/></g>`,
+  bg_vault: `<g fill="none" stroke="currentColor" stroke-width="1.6" opacity=".8"><path d="M230 320 V90 M230 90 C180 90 150 130 150 180 M230 90 C280 90 310 130 310 180 M150 180 V320 M310 180 V320 M190 320 V160 C190 130 205 120 230 120 C255 120 270 130 270 160 V320"/></g><g fill="currentColor"><circle cx="230" cy="75" r="2"/><circle cx="160" cy="140" r="1.4"/><circle cx="300" cy="140" r="1.4"/></g>`,
+  bg_nebula:`<g fill="currentColor"><circle cx="90" cy="80" r="1.7"/><circle cx="180" cy="150" r="1.4"/><circle cx="260" cy="60" r="2"/><circle cx="330" cy="170" r="1.5"/><circle cx="400" cy="100" r="1.7"/><circle cx="140" cy="240" r="1.4"/><circle cx="300" cy="260" r="1.7"/><circle cx="220" cy="200" r="1.3"/></g><g stroke="currentColor" stroke-width=".7" opacity=".6" fill="none"><path d="M90 80 L180 150 L260 60 M260 60 L330 170 L400 100 M140 240 L220 200 L300 260"/></g>`,
+};
+
+/* ---------------- state / storage ---------------- */
+const KEY = 'mego-rpg-save-v1';
+let S = null;
+
+function freshState(){
+  return {
+    v: 1, createdAt: Date.now(), seenIntro: false,
+    player: { name:'', level:1, xp:0, totalXp:0, coins:100 },
+    settings: { sound:false, reminders:true },
+    streak: { current:0, best:0, freezes:1, milestones:{} },
+    today:  freshToday(),
+    prayerHist: {},
+    stats: { quests:0, studySec:0, prayers:0, workouts:0, bosses:0, perfectDays:0 },
+    subjects: Object.fromEntries(SUBJECTS.map(s => [s.id, { xp:0, studySec:0, bossHp:500, bossMax:500, bossTier:1 }])),
+    achievements: {},
+    inv: {
+      owned: ['sword_rusty','outfit_traveler','title_novice','bg_grove'],
+      equipped: { weapon:'sword_rusty', outfit:'outfit_traveler', aura:null, pet:null, title:'title_novice', background:'bg_grove' },
+    },
+  };
+}
+function freshToday(){
+  return { date: todayStr(), quests:{}, prayers:Object.fromEntries(PRAYERS.map(p => [p.id,false])),
+           perfect:false, requiredDone:false, exams:{}, reminderDismissed:false };
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function loadSave(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    if(!d || !d.player) return false;
+    S = Object.assign(freshState(), d);           // shallow patch keeps new fields on old saves
+    S.player = Object.assign({ name:'', level:1, xp:0, totalXp:0, coins:0 }, d.player);
+    S.settings = Object.assign({ sound:false, reminders:true }, d.settings);
+    S.stats = Object.assign({ quests:0, studySec:0, prayers:0, workouts:0, bosses:0, perfectDays:0 }, d.stats);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------------- day loop (dates, streak, dailies) ---------------- */
+function handleNewDay(){
+  const t = todayStr();
+  if (S.today.date === t) return;
+  const prev = S.today;
+  const gap = daysBetween(prev.date, t);          // 1 = consecutive, 2 = one missed day, ...
+  if (gap >= 1){
+    if (prev.requiredDone && gap === 1){
+      S.streak.current++;
+      grantMilestones();
+      toast(`Streak extended — <b style="color:var(--gold2)">${S.streak.current} DAYS</b>`, 'gold', 'flame');
+    } else if (gap <= 2 && S.streak.freezes > 0 && S.streak.current > 0){
+      S.streak.freezes--;
+      toast('A <b>Streak Freeze</b> protected your streak.', 'gold', 'snow');
+    } else if (S.streak.current > 0){
+      S.streak.current = 0;
+      toast('The streak has broken. Your XP, levels and trophies are all safe — begin again today.', 'red', 'flame');
+    } else {
+      S.streak.current = 0;
+    }
+    S.streak.best = Math.max(S.streak.best, S.streak.current);
+  }
+  const hist = { ...S.prayerHist, [prev.date]: prayerCount() };
+  const dates = Object.keys(hist).sort().slice(-14);
+  S.prayerHist = Object.fromEntries(dates.map(d => [d, hist[d]]));
+  S.today = freshToday();
+  save();
+}
+function grantMilestones(){
+  for (const m of MILESTONES){
+    if (S.streak.current >= m.d && !S.streak.milestones[m.d]){
+      S.streak.milestones[m.d] = true;
+      if (m.kind === 'coins') S.player.coins += m.amt;
+      if ((m.kind === 'item' || m.kind === 'title') && !S.inv.owned.includes(m.id)) S.inv.owned.push(m.id);
+      toast(`Streak milestone — <b style="color:var(--gold2)">${esc(m.label)}</b>`, 'gold', 'trophy');
+      Sfx.achieve();
+    }
+  }
+}
+const prayerCount = () => Object.values(S.today.prayers).filter(Boolean).length;
+const streakKeeperDone = () => !!(S.today.quests.study25 && S.today.quests.study25.done);
+
+/* ---------------- audio (synthesized, off by default) ---------------- */
+const Sfx = {
+  ctx: null,
+  t(f, dur, type='sine', vol=.1, at=0, slide=0){
+    if (!S || !S.settings.sound) return;
+    try{
+      this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const c = this.ctx, o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + at;
+      o.type = type; o.frequency.setValueAtTime(f, t0);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t0 + dur);
+      g.gain.setValueAtTime(vol, t0);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + .03);
+    }catch(e){}
+  },
+  quest(){ this.t(587,.14,'triangle',.12); this.t(880,.22,'triangle',.1,.1); },
+  coin(){ this.t(1318,.08,'square',.05); this.t(1760,.14,'square',.045,.07); },
+  level(){ [523,659,784,1046,1318].forEach((f,i)=>this.t(f,.3,'triangle',.11,i*.12)); },
+  hit(){ this.t(160,.25,'sawtooth',.16,0,-110); },
+  achieve(){ this.t(880,.4,'sine',.1); this.t(1174.7,.5,'sine',.07,.09); },
+  ui(){ this.t(440,.06,'triangle',.045); },
+};
+
+/* ---------------- fx: toasts, floats, modals ---------------- */
+function toast(html, kind='', ic='sparkle'){
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind;
+  t.innerHTML = `${icon(ic)}<span>${html}</span>`;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>t.classList.add('out'), 3600);
+  setTimeout(()=>t.remove(), 4100);
+}
+function floatText(el, txt, cls=''){
+  if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = el.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className = 'ftxt ' + cls;
+  d.textContent = txt;
+  d.style.left = (r.left + r.width/2) + 'px';
+  d.style.top  = (r.top + 4) + 'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 1300);
+}
+function openModal(html){
+  closeModal();
+  const w = document.createElement('div');
+  w.className = 'mwrap'; w.id = 'modal';
+  w.innerHTML = `<div class="mback" data-action="modal-close"></div><div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(w);
+  requestAnimationFrame(()=>w.classList.add('on'));
+  const f = w.querySelector('button, input'); if (f) f.focus();
+}
+function closeModal(){
+  const m = $('#modal');
+  if (m){ m.classList.remove('on'); setTimeout(()=>m.remove(), 180); }
+}
+let ConfirmCb = null;
+function confirmModal({ title, body, ok='Confirm', danger=false, ic='gear', onOk }){
+  ConfirmCb = onOk;
+  openModal(`
+    <div class="m-title">${icon(ic)}${esc(title)}</div>
+    <div class="m-body">${body}</div>
+    <div class="m-actions">
+      <button class="btn ghost" data-action="modal-close">Cancel</button>
+      <button class="btn ${danger?'danger':'solid'}" data-action="confirm-ok">${esc(ok)}</button>
+    </div>`);
+}
+
+/* ---------------- core economy ---------------- */
+const xpNeed = lvl => 100 + (lvl - 1) * 50;
+let LevelQueue = 0, LevelCoins = 0;
+
+function gainXP(n, srcEl){
+  if (n <= 0) return;
+  S.player.xp += n; S.player.totalXp += n;
+  floatText(srcEl, `+${n} XP`);
+  while (S.player.xp >= xpNeed(S.player.level)){
+    S.player.xp -= xpNeed(S.player.level);
+    S.player.level++;
+    LevelQueue++; LevelCoins += 50;
+    S.player.coins += 50;
+  }
+  if (LevelQueue > 0){ showLevelUp(); Sfx.level(); }
+  save(); renderAll();
+}
+function addCoins(n, srcEl){
+  S.player.coins += n;
+  if (n > 0) floatText(srcEl, `+${n} COINS`, '');
+  Sfx.coin(); save(); renderAll();
+}
+function showLevelUp(){
+  const root = $('#lvlup');
+  const motes = Array.from({length:14}, (_,i) =>
+    `<span class="mote" style="left:${8+Math.random()*84}%;bottom:${10+Math.random()*20}%;animation-delay:${(Math.random()*1.6).toFixed(2)}s"></span>`).join('');
+  root.innerHTML = `
+    <div class="rays"></div>${motes}
+    <div class="lvl-in">
+      <div class="lvl-cap">New height reached</div>
+      <div class="lvl-word">Level Up</div>
+      <div class="lvl-num">${S.player.level - LevelQueue + 1 <= 0 ? S.player.level : S.player.level}</div>
+      <div class="lvl-rew">+${LevelCoins} Coins &nbsp;·&nbsp; Level ${S.player.level}</div>
+      <button class="btn solid" data-action="lvlup-close">Continue</button>
+    </div>`;
+  root.classList.add('on');
+  LevelQueue = 0; LevelCoins = 0;
+}
+
+/* ---------------- quests ---------------- */
+function qget(id){
+  if (!S.today.quests[id]) S.today.quests[id] = { p:0, done:false };
+  return S.today.quests[id];
+}
+function addQuestProgress(id, n, srcEl){
+  const def = questDef(id); if (!def) return;
+  const q = qget(id); if (q.done) return;
+  q.p = clamp(q.p + n, 0, def.target);
+  if (q.p >= def.target) completeQuest(id, srcEl); else save();
+}
+function completeQuest(id, srcEl){
+  const def = questDef(id); if (!def) return;
+  const q = qget(id); if (q.done) return;
+  q.done = true; q.p = def.target;
+  if (id === 'study25') S.today.requiredDone = true;
+  S.stats.quests++;
+  gainXP(def.xp, srcEl); addCoins(def.coins, srcEl);
+  Sfx.quest();
+  const card = srcEl && srcEl.closest ? srcEl.closest('.quest') : null;
+  if (card){ card.classList.add('just-done'); }
+  toast(`<b style="color:var(--gold2)">${esc(def.name)}</b> — complete`, 'gold', 'check');
+  if (Math.random() < .18){ S.player.coins += 5; toast('Lucky find — <b style="color:var(--gold2)">+5 coins</b>', '', 'coin'); }
+  checkPerfect(); checkAchievements(); save(); renderAll();
+}
+function checkPerfect(){
+  if (S.today.perfect) return;
+  const q = S.today.quests;
+  const study = q.study25 && q.study25.done;
+  const pray  = prayerCount() >= 3;
+  const body  = (q.exercise && q.exercise.done) || (q.read && q.read.done);
+  if (study && pray && body){
+    S.today.perfect = true;
+    S.stats.perfectDays = (S.stats.perfectDays || 0) + 1;
+    toast('<b style="color:var(--green)">PERFECT DAY</b> — You showed up today. +25 XP · +25 Coins', 'green', 'sparkle');
+    Sfx.achieve();
+    gainXP(25); addCoins(25);
+    checkAchievements(); save();
+  }
+}
+function logManual(id, srcEl){
+  const def = questDef(id); if (!def) return;
+  if (id === 'exercise' || id === 'workout30') S.stats.workouts++;
+  addQuestProgress(id, def.target, srcEl);
+}
+function openChallenge(){
+  confirmModal({
+    title:'Difficult Challenge', ic:'target',
+    body:'Log a genuinely hard thing you completed today — a tough exam, a fear faced, a wall climbed. Honor system: make it count.',
+    ok:'Log Challenge', onOk(){ logManual('challenge'); },
+  });
+}
+
+/* ---------------- prayers ---------------- */
+function togglePrayer(pid, srcEl){
+  S.today.prayers[pid] = !S.today.prayers[pid];
+  if (S.today.prayers[pid]){
+    S.stats.prayers++;
+    gainXP(5, srcEl);
+    Sfx.ui();
+    if (prayerCount() === 5) addQuestProgress('prayers5', 5, srcEl);
+    else addQuestProgress('prayers5', 0, srcEl); // progress derives from count
+  } else {
+    S.stats.prayers = Math.max(0, S.stats.prayers - 1);
+    Sfx.ui();
+  }
+  save(); renderAll();
+}
+
+/* ---------------- bosses ---------------- */
+function damageBoss(subId, dmg, srcEl){
+  const sub = S.subjects[subId]; if (!sub) return;
+  sub.bossHp = Math.max(0, sub.bossHp - dmg);
+  floatText(srcEl, `-${dmg} HP`, 'red');
+  Sfx.hit();
+  const sig = srcEl && srcEl.closest ? srcEl.closest('.boss-big') : null;
+  if (sig){ sig.classList.remove('shake','hurt'); void sig.offsetWidth; sig.classList.add('shake','hurt'); }
+  if (sub.bossHp === 0) defeatBoss(subId);
+  save(); renderAll();
+}
+function defeatBoss(subId){
+  const def = SUBJECTS.find(s => s.id === subId);
+  const sub = S.subjects[subId];
+  S.stats.bosses++;
+  sub.bossTier++;
+  sub.bossMax = Math.round(sub.bossMax * 1.6 / 25) * 25;
+  sub.bossHp = sub.bossMax;
+  Sfx.achieve();
+  openModal(`
+    <div class="boss-big" style="color:#e6d9c5">
+      <div class="m-title" style="justify-content:center">${icon('trophy')}Boss Defeated</div>
+      ${sigilSVG(subId, 'big')}
+      <div class="b-name" style="font-size:19px">${esc(def.boss)}</div>
+      <p class="b-flavor">“Impressive. But I do not die — I return, stronger.”</p>
+      <div class="lvl-rew" style="color:var(--gold2)">+200 XP &nbsp;·&nbsp; +100 Coins</div>
+      <p class="b-flavor" style="margin-top:0">A Tier ${ROMAN[Math.min(sub.bossTier-1,9)]} version now guards ${esc(def.name)} — <b>${fmt(sub.bossMax)} HP</b>.</p>
+      <div class="m-actions" style="justify-content:center"><button class="btn solid" data-action="modal-close">Stand Victorious</button></div>
+    </div>`);
+  gainXP(200); addCoins(100);
+  const ach = ACHIEVEMENTS.find(a => a.id === 'slayer');
+  if (!S.achievements.slayer && !S.inv.owned.includes('title_bossy')) S.inv.owned.push('title_bossy');
+  checkAchievements(); save();
+}
+
+/* ---------------- achievements ---------------- */
+function checkAchievements(){
+  let changed = false;
+  for (const a of ACHIEVEMENTS){
+    if (!S.achievements[a.id] && a.test(S)){
+      S.achievements[a.id] = todayStr();
+      S.player.coins += 20;
+      toast(`<b style="color:var(--gold2)">Achievement</b> — ${esc(a.name)} · +20 coins`, 'gold', 'trophy');
+      Sfx.achieve();
+      changed = true;
+    }
+  }
+  if (changed) save();
+}
+
+/* ---------------- inventory / shop ---------------- */
+function buyItem(id, srcEl){
+  const it = itemDef(id); if (!it) return;
+  if (id === 'freeze'){
+    if (S.streak.freezes >= 3) return toast('You can carry at most 3 Streak Freezes.', '', 'snow');
+    if (S.player.coins < 150) return toast('Not enough coins.', 'red', 'coin');
+    S.player.coins -= 150; S.streak.freezes++;
+    addCoins(0, srcEl);
+    toast('<b>Streak Freeze</b> purchased.', 'gold', 'snow');
+    save(); renderAll(); return;
+  }
+  if (S.inv.owned.includes(id)) return;
+  if (it.cost == null){ Sfx.ui(); return toast(`Locked — ${esc(it.lock || 'unavailable')}.`, '', 'lock'); }
+  if (S.player.coins < it.cost){ Sfx.ui(); return toast('Not enough coins. Quests await.', 'red', 'coin'); }
+  S.player.coins -= it.cost;
+  S.inv.owned.push(id);
+  toast(`<b style="color:var(--gold2)">${esc(it.name)}</b> acquired.`, 'gold', 'gem');
+  Sfx.coin(); save(); renderAll();
+}
+function equipItem(id){
+  const it = itemDef(id); if (!it) return;
+  if (!S.inv.owned.includes(id)) return;
+  const eq = S.inv.equipped;
+  if (eq[it.cat] === id && (it.cat === 'aura' || it.cat === 'pet' || it.cat === 'background' || it.cat === 'title')){
+    eq[it.cat] = (it.cat === 'title') ? 'title_novice' : null;
+  } else {
+    eq[it.cat] = id;
+    if (it.cat === 'pet') checkAchievements();
+  }
+  Sfx.ui(); save(); renderAll();
+}
+
+/* ---------------- study timer ---------------- */
+const SESSION_XP = { 25:20, 50:40, 90:75 };
+const SESSION_COIN = { 25:10, 50:20, 90:35 };
+const Timer = {
+  subj:null, mins:0, endAt:0, left:0, running:false, armed:false, iv:null,
+  C: 2 * Math.PI * 80,
+  open(preSub){
+    if (this.running){ this.renderModal(); return; }
+    this.subj = preSub || this.subj || SUBJECTS[0].id;
+    this.mins = this.mins || 25;
+    this.renderModal();
+  },
+  renderModal(){
+    const sub = this.subj;
+    openModal(`
+      <div class="m-title">${icon('timer')}Study Session</div>
+      ${this.running || this.left > 0 ? `
+        <div class="tclock">
+          <svg class="tring" viewBox="0 0 190 190">
+            <circle class="trk" cx="95" cy="95" r="80"/>
+            <circle class="tvl" id="t-ring" cx="95" cy="95" r="80" stroke-dasharray="${this.C}" stroke-dashoffset="0"/>
+          </svg>
+          <div class="ttime"><b id="t-time">--:--</b><span>${esc((SUBJECTS.find(s=>s.id===this.subj)||{}).name||'')} · ${this.mins} min</span></div>
+        </div>
+        <div class="m-actions" style="justify-content:center">
+          <button class="btn" data-action="session-pause">${this.running ? icon('pause')+' Pause' : icon('play')+' Resume'}</button>
+          <button class="btn danger" data-action="session-abort">${this.armed ? 'Tap again to abandon' : 'Abandon'}</button>
+        </div>` : `
+        <div class="m-body">Choose a subject and a duration. Completing the session earns XP, advances the subject, and strikes its Boss.</div>
+        <div class="pickgrid">${SUBJECTS.map(s => `
+          <button class="pickb ${s.id===sub?'on':''}" data-action="session-subj" data-id="${s.id}">${icon(s.icon)}${esc(s.name)}</button>`).join('')}
+        </div>
+        <div class="dursegs">${[25,50,90].map(m => `
+          <button class="btn ${m===this.mins?'solid':'ghost'}" data-action="session-dur" data-id="${m}">${m} min<br><small style="text-transform:none;letter-spacing:0">+${SESSION_XP[m]} XP</small></button>`).join('')}
+        </div>
+        <div class="m-actions"><button class="btn solid" data-action="session-start" style="width:100%;justify-content:center">${icon('play')} Begin Session</button></div>`}
+    `);
+  },
+  pickSubj(id){ this.subj = id; this.renderModal(); },
+  pickDur(m){ this.mins = m; this.renderModal(); },
+  start(){
+    this.endAt = Date.now() + this.mins * 60000;
+    this.left = this.mins * 60000;
+    this.running = true; this.armed = false;
+    this.renderModal(); this.tick();
+    this.iv = setInterval(()=>this.tick(), 250);
+    Sfx.ui();
+  },
+  pause(){
+    this.running = false; clearInterval(this.iv);
+    this.renderModal();
+  },
+  resume(){
+    this.endAt = Date.now() + this.left;
+    this.running = true; this.armed = false;
+    this.renderModal();
+    this.iv = setInterval(()=>this.tick(), 250);
+  },
+  abort(){
+    if (!this.armed){ this.armed = true; this.renderModal(); return; }
+    clearInterval(this.iv); this.running = false; this.left = 0; this.armed = false;
+    closeModal(); renderChrome();
+    toast('Session abandoned. No judgment — begin again when ready.', '', 'reset');
+  },
+  tick(){
+    if (!this.running) return;
+    this.left = Math.max(0, this.endAt - Date.now());
+    const ring = $('#t-ring'), time = $('#t-time');
+    if (ring){
+      ring.style.strokeDashoffset = this.C * (1 - this.left / (this.mins*60000));
+      const s = Math.ceil(this.left/1000);
+      time.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }
+    this.chip();
+    if (this.left <= 0) this.finish();
+  },
+  chip(){
+    const c = $('#tchip');
+    if (this.running || this.left > 0){
+      const s = Math.ceil(this.left/1000);
+      c.classList.add('on');
+      c.innerHTML = `${icon('timer','ic-sm')} ${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')} · ${(SUBJECTS.find(x=>x.id===this.subj)||{name:''}).name}`;
+    } else c.classList.remove('on');
+  },
+  finish(){
+    clearInterval(this.iv); this.running = false;
+    const subjId = this.subj, mins = this.mins;
+    this.left = 0; this.chip();
+    closeModal();
+    completeSession(subjId, mins);
+  },
+};
+function completeSession(subjId, mins){
+  const def = SUBJECTS.find(s => s.id === subjId);
+  const sub = S.subjects[subjId];
+  const baseXp = SESSION_XP[mins] || Math.round(mins * .8);
+  const q25 = qget('study25'), q50 = qget('study50');
+  // First 25/50-minute session of the day pays the quest reward; extra sessions pay half.
+  const first = (mins === 25 && !q25.done) || (mins === 50 && !q50.done);
+  const playerXp = first ? baseXp : Math.round(baseXp / 2);
+  sub.xp += baseXp; sub.studySec += mins * 60;
+  S.stats.studySec += mins * 60;
+  addQuestProgress('study25', mins);
+  addQuestProgress('study50', mins);
+  toast(`<b style="color:var(--gold2)">Session complete</b> — ${mins} min of ${esc(def.name)}. ${esc(def.boss)} takes <b style="color:#e88">-${baseXp} HP</b>.`, 'gold', 'timer');
+  gainXP(playerXp);
+  addCoins(SESSION_COIN[mins] || 5);
+  damageBoss(subjId, baseXp);
+  checkAchievements(); save(); renderAll();
+}
+
+/* ============================================================
+   RENDERERS
+   ============================================================ */
+let CUR = 'home';
+let InvTab = 'vault';
+
+function avatarHTML(px){
+  const eq = S.inv.equipped;
+  const o = OUTFIT_COLORS[eq.outfit] || OUTFIT_COLORS.outfit_traveler;
+  const w = eq.weapon ? WEAPON_ART[eq.weapon] : null;
+  const ac = eq.aura ? AURA_ART[eq.aura] : null;
+  const pet = eq.pet ? PET_ART[eq.pet] : null;
+  return `<div class="avatar" style="width:${px}px">
+    <svg viewBox="0 0 140 150" role="img" aria-label="Player avatar">
+      ${ac ? `<g class="aura-spin"><circle cx="70" cy="80" r="50" fill="none" stroke="${ac}" stroke-width="1.5" stroke-dasharray="4 9" opacity=".85"/></g>
+              <g class="aura-spin a2"><circle cx="70" cy="80" r="57" fill="none" stroke="${ac}" stroke-width=".8" stroke-dasharray="1 12" opacity=".5"/></g>` : ''}
+      <ellipse cx="70" cy="141" rx="42" ry="6" fill="rgba(0,0,0,.5)"/>
+      <path d="M70 24 C51 26 44 43 43 62 C42 87 36 105 31 123 L109 123 C104 105 98 87 97 62 C96 43 89 26 70 24 Z" fill="${o.cloak}"/>
+      <path d="M70 24 C51 26 44 43 43 62 C42 87 36 105 31 123 L46 123 C49 100 52 80 53 60 C54 42 58 30 70 24 Z" fill="rgba(0,0,0,.22)"/>
+      <path d="M70 29 C57 31 51 43 51 57 C51 70 59 79 70 79 C81 79 89 70 89 57 C89 43 83 31 70 29 Z" fill="${o.hood}"/>
+      <ellipse cx="70" cy="59" rx="11.5" ry="13" fill="#0c0e13"/>
+      <circle cx="65.6" cy="58" r="2" fill="${o.trim}"/><circle cx="74.4" cy="58" r="2" fill="${o.trim}"/>
+      <path d="M70 79 L70 123" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+      <path d="M70 86 l5.5 6.5 L70 99 l-5.5 -6.5 Z" fill="none" stroke="${o.trim}" stroke-width="1.6"/>
+      <path d="M31 123 L109 123" stroke="${o.trim}" stroke-width="2" opacity=".85"/>
+      ${w ? `<g transform="translate(108 86) rotate(14)">${w}</g>` : ''}
+    </svg>
+    ${pet ? `<div class="pet-float"><svg viewBox="0 0 56 56" class="pet-tok" role="img" aria-label="Pet">
+      <path d="M28 3 L51 28 L28 53 L5 28 Z" fill="rgba(0,0,0,.4)" stroke="rgba(255,255,255,.15)"/>
+      ${pet.s}</svg></div>` : ''}
+  </div>`;
+}
+function petSVG(id){
+  const p = PET_ART[id]; if (!p) return '';
+  return `<svg viewBox="0 0 56 56" class="pet-tok" role="img" aria-label="Pet">
+    <path d="M28 3 L51 28 L28 53 L5 28 Z" fill="rgba(0,0,0,.4)" stroke="rgba(255,255,255,.15)"/>${p.s}</svg>`;
+}
+function itemVisual(it){
+  if (it.cat === 'weapon') return `<svg viewBox="-16 -56 32 76" class="wpn">${WEAPON_ART[it.id] || ''}</svg>`;
+  if (it.cat === 'pet') return petSVG(it.id);
+  if (it.cat === 'outfit'){
+    const o = OUTFIT_COLORS[it.id] || OUTFIT_COLORS.outfit_traveler;
+    return `<svg viewBox="0 0 60 64" class="wpn"><path d="M30 6 C19 8 14 19 13 32 C12 48 9 56 6 60 L54 60 C51 56 48 48 47 32 C46 19 41 8 30 6 Z" fill="${o.cloak}"/><path d="M30 6 C19 8 14 19 13 32 C12 48 9 56 6 60 L17 60 C19 44 21 26 22 14 C24 9 27 7 30 6 Z" fill="rgba(0,0,0,.25)"/><path d="M6 60 L54 60" stroke="${o.trim}" stroke-width="2.4"/></svg>`;
+  }
+  if (it.cat === 'aura'){
+    const c = AURA_ART[it.id] || '#888';
+    return `<svg viewBox="0 0 60 60" class="wpn"><circle cx="30" cy="30" r="22" fill="none" stroke="${c}" stroke-width="2" stroke-dasharray="4 8"/><circle cx="30" cy="30" r="15" fill="none" stroke="${c}" stroke-width="1" stroke-dasharray="1 6" opacity=".6"/></svg>`;
+  }
+  if (it.cat === 'background'){
+    return `<svg viewBox="0 0 64 44" class="wpn" style="height:44px"><rect width="64" height="44" fill="#10131b" stroke="rgba(255,255,255,.12)"/><g color="#cdd6ea" opacity=".8">${BG_ART[it.id] || ''}</g></svg>`;
+  }
+  return icon(it.cat === 'title' ? 'crown' : 'gem', 'ic-lg');
+}
+function sigilSVG(subId, extra=''){
+  return `<svg viewBox="0 0 100 100" class="sigil ${extra}" role="img" aria-label="Boss sigil">
+    <polygon class="hexfr" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" fill="rgba(0,0,0,.35)" stroke-width="2"/>
+    ${SIGILS[subId] || ''}</svg>`;
+}
+function questCardHTML(def){
+  const q = qget(def.id);
+  const pct = Math.round(q.p / def.target * 100);
+  const isTimer = def.act === 'session';
+  const isPrayer = def.act === 'goto-prayer';
+  let action;
+  if (q.done) action = `<svg class="q-check"><use href="#i-check"/></svg>`;
+  else if (isTimer) action = `<button class="btn mini" data-action="session-open">Start</button>`;
+  else if (isPrayer) action = `<button class="btn mini ghost" data-action="tab" data-tab="prayer">Open</button>`;
+  else if (def.act === 'challenge') action = `<button class="btn mini" data-action="quest-challenge">Log it</button>`;
+  else action = `<button class="btn mini ghost" data-action="quest-log" data-id="${def.id}">${esc(def.logLabel || 'Mark done')}</button>`;
+  return `
+  <div class="quest ${q.done ? 'done' : ''}" id="q-${def.id}">
+    <div class="q-ic">${icon(def.icon)}</div>
+    <div class="q-body">
+      <div class="q-top"><span class="q-name">${esc(def.name)}</span>${def.required ? '<span class="tag-req">Keeps Streak</span>' : ''}</div>
+      <div class="q-sub">${esc(def.desc)}</div>
+      <div class="q-prog"><div class="bar thin grn"><i style="width:${pct}%"></i></div><span class="bartxt">${fmt(q.p)}${def.unit ? ' / ' + fmt(def.target) + def.unit : ''}</span></div>
+    </div>
+    <div class="q-right">
+      <div class="q-rew">+${def.xp} XP · +${def.coins} <svg class="ic ic-sm" style="color:var(--gold)"><use href="#i-coin"/></svg></div>
+      ${action}
+    </div>
+  </div>`;
+}
+function questListHTML(){
+  return ALL_QUESTS().map(questCardHTML).join('');
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  const p = S.player;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const remaining = ALL_QUESTS().filter(d => !qget(d.id).done).length;
+  const pc = prayerCount();
+  const reminderDue = S.settings.reminders && hour >= 17 && !streakKeeperDone() && !S.today.reminderDismissed;
+  const title = (S.inv.equipped.title && itemDef(S.inv.equipped.title)) ? itemDef(S.inv.equipped.title).name : '';
+  const bg = BG_ART[S.inv.equipped.background] || BG_ART.bg_grove;
+
+  $('#tab-home').innerHTML = `
+    <div class="panel framed cut" id="hero">
+      <div class="hero-bg"><svg viewBox="0 0 460 320" preserveAspectRatio="xMidYMax slice">${bg}</svg></div>
+      <div class="hero-in">
+        ${avatarHTML(112)}
+        <div class="h-id">
+          <div class="h-name">${esc(p.name || 'MEGO')}</div>
+          ${title ? `<div class="h-title"><span class="dia"></span>${esc(title)}<span class="dia"></span></div>` : ''}
+          <div class="h-lvrow"><b>LEVEL <b2>${p.level}</b2></b><span class="lvnum fd">${fmt(p.xp)}<span style="font-size:14px;color:var(--dim)"> / ${fmt(xpNeed(p.level))} XP</span></span></div>
+          <div class="h-xp"><div class="bar"><i style="width:${Math.min(100, p.xp / xpNeed(p.level) * 100)}%"></i></div></div>
+        </div>
+        <div class="h-stats">
+          <span class="hstat coin">${icon('coin')}${fmt(p.coins)}<small>Coins</small></span>
+          <span class="hstat streak">${icon('flame')}${S.streak.current}<small>Day Streak</small></span>
+          <span class="hstat frz">${icon('snow')}${S.streak.freezes}<small>Freezes</small></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dispatch">
+      <b>${greet.toUpperCase()}, ${esc((p.name || 'MEGO').toUpperCase())}.</b>
+      <span class="pray-mini" aria-label="Prayers today">${PRAYERS.map(pr => `<i class="${S.today.prayers[pr.id] ? 'f' : ''}"></i>`).join('')}<span class="bartxt" style="margin-left:4px">${pc}/5</span></span>
+      <span class="cnt">${remaining > 0 ? `<b style="color:var(--gold2)">${remaining}</b> quest${remaining>1?'s':''} remaining today` : 'All quests complete. Well fought.'}</span>
+    </div>
+
+    ${S.today.perfect ? `<div class="dispatch" style="border-color:rgba(143,191,116,.4)"><span class="pd-chip">${icon('sparkle','ic-sm')} Perfect Day</span><span style="color:var(--dim)">You showed up today. That is the whole secret.</span></div>` : ''}
+    ${reminderDue ? `
+    <div class="reminder">${icon('flame')}
+      <span>Your streak is waiting. Complete one study session before midnight.</span>
+      <button class="btn mini ghost" data-action="reminder-dismiss">Dismiss</button>
+    </div>` : ''}
+
+    <div class="homegrid">
+      <div class="hcol">
+        <div class="panel">
+          <div class="phd">${icon('swords')}<h2>Daily Quests</h2><span class="right">${ALL_QUESTS().filter(d=>qget(d.id).done).length} / ${ALL_QUESTS().length} done</span></div>
+          ${questListHTML()}
+        </div>
+      </div>
+      <div class="hcol">
+        <div class="bigcta cut">
+          ${icon('timer','ic-lg')}
+          <div><b>BEGIN STUDY SESSION</b><small>Every minute strikes a Boss</small></div>
+          <button class="btn solid" data-action="session-open">Start</button>
+        </div>
+        <div class="panel">
+          <div class="phd">${icon('mosque')}<h2>Today's Prayers</h2><span class="right">${pc} / 5</span></div>
+          ${PRAYERS.map(pr => `
+            <div class="prow ${S.today.prayers[pr.id] ? 'done' : ''}" style="padding:8px 12px">
+              <span class="p-name" style="font-size:13.5px">${pr.name}</span>
+              <button class="iconbtn" style="width:28px;height:28px" data-action="prayer" data-p="${pr.id}" aria-label="Mark ${pr.name} as observed">
+                ${S.today.prayers[pr.id] ? icon('check','ic-sm') : ''}
+              </button>
+            </div>`).join('')}
+          <button class="btn mini ghost" data-action="tab" data-tab="prayer" style="margin-top:10px">Prayer Tracker</button>
+        </div>
+        <div class="panel">
+          <div class="phd">${icon('skull')}<h2>Bosses</h2></div>
+          ${SUBJECTS.map(s => { const sub = S.subjects[s.id]; return `
+            <div style="margin-bottom:11px;cursor:pointer" data-action="boss-open" data-s="${s.id}" role="button" tabindex="0">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                <span style="color:var(--dim);letter-spacing:.1em">${esc(s.boss)}${sub.bossTier>1 ? ' ' + ROMAN[Math.min(sub.bossTier-1,9)] : ''}</span>
+                <span class="bartxt">${fmt(sub.bossHp)}/${fmt(sub.bossMax)}</span>
+              </div>
+              <div class="bar thin hp"><i style="width:${sub.bossHp/sub.bossMax*100}%"></i></div>
+            </div>`; }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- quests tab ---------- */
+function renderQuests(){
+  $('#tab-quests').innerHTML = `
+    <div class="bigcta cut">
+      ${icon('timer','ic-lg')}
+      <div><b>STUDY SESSION</b><small>25 / 50 / 90 minutes — the core of your power</small></div>
+      <button class="btn solid" data-action="session-open">Begin</button>
+    </div>
+    <div class="panel"><div class="phd">${icon('check')}<h2>Core Quests</h2></div>${CORE_QUESTS.map(questCardHTML).join('')}</div>
+    <div class="panel"><div class="phd">${icon('sparkle')}<h2>Bonus Quests</h2><span class="right">rotate daily</span></div>${bonusToday().map(questCardHTML).join('')}</div>`;
+}
+
+/* ---------- prayer tab ---------- */
+function renderPrayer(){
+  const pc = prayerCount();
+  const week = [];
+  for (let i = 6; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = todayStr(d);
+    week.push({ label: ['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()], n: (key === S.today.date ? pc : (S.prayerHist[key] || 0)) });
+  }
+  const histVals = Object.values(S.prayerHist); const total30 = histVals.reduce((a,b)=>a+b,0);
+  $('#tab-prayer').innerHTML = `
+    <div class="panel framed cut">
+      <div class="phd">${icon('mosque')}<h2>Today's Prayers</h2><span class="right">${pc} / 5</span></div>
+      ${PRAYERS.map(pr => `
+        <div class="prow ${S.today.prayers[pr.id] ? 'done' : ''}">
+          <span class="p-name">${pr.name}</span><span class="p-ar">${pr.ar}</span>
+          <span class="pdot">${S.today.prayers[pr.id] ? icon('check','ic-sm') : ''}</span>
+          <button class="btn mini ${S.today.prayers[pr.id] ? 'ghost' : ''}" data-action="prayer" data-p="${pr.id}">
+            ${S.today.prayers[pr.id] ? 'Observed' : 'Mark as observed'}
+          </button>
+        </div>`).join('')}
+      <p class="pray-note">A quiet habit tracker, nothing more — presence matters more than perfection. Missing one is never a punishment here.</p>
+      <div class="week">
+        ${week.map(w => `<div class="wday"><div class="wdots">${PRAYERS.map((_,i)=>`<i class="${i < w.n ? 'f' : ''}"></i>`).join('')}</div><span>${w.label} ${w.n}/5</span></div>`).join('')}
+      </div>
+      <div class="setrow" style="border-top:1px solid var(--line);margin-top:14px">
+        <div class="s-info"><b>${fmt(S.stats.prayers)}</b><span>prayers observed all-time · ${total30} in tracked history</span></div>
+      </div>
+    </div>`;
+}
+
+/* ---------- bosses tab ---------- */
+function renderBosses(){
+  $('#tab-bosses').innerHTML = `
+    <div class="panel"><div class="phd">${icon('skull')}<h2>Subject Bosses</h2><span class="right">study sessions deal damage</span></div>
+    <div class="bossgrid">
+      ${SUBJECTS.map(s => { const sub = S.subjects[s.id]; return `
+        <div class="bosscard" data-action="boss-open" data-s="${s.id}" role="button" tabindex="0" aria-label="Open ${esc(s.boss)} battle">
+          <span class="b-tier">${sub.bossTier > 1 ? ROMAN[Math.min(sub.bossTier-1,9)] : ''}</span>
+          ${sigilSVG(s.id)}
+          <div class="b-name">${esc(s.boss)}</div>
+          <div class="b-subj">${esc(s.name)} · Lv ${1 + Math.floor(sub.xp/150)}</div>
+          <div class="bar hp"><i style="width:${sub.bossHp/sub.bossMax*100}%"></i></div>
+          <div class="b-hp"><span>HP</span><span>${fmt(sub.bossHp)} / ${fmt(sub.bossMax)}</span></div>
+        </div>`; }).join('')}
+    </div></div>`;
+}
+function openBoss(subId){
+  const def = SUBJECTS.find(s => s.id === subId);
+  const sub = S.subjects[subId];
+  const examUsed = !!S.today.exams[subId];
+  openModal(`
+    <div class="boss-big" id="boss-view" style="color:#d8cdb4">
+      ${sigilSVG(subId)}
+      <div class="b-name" style="font-size:19px">${esc(def.boss)}${sub.bossTier>1 ? ' <span style="color:var(--red)">'+ROMAN[Math.min(sub.bossTier-1,9)]+'</span>' : ''}</div>
+      <div class="b-subj">${esc(def.name)} · Subject Level ${1 + Math.floor(sub.xp/150)} · ${fmt(sub.xp % 150)}/150 XP</div>
+      <div class="bar hp"><i style="width:${sub.bossHp/sub.bossMax*100}%"></i></div>
+      <div class="b-hp"><span>BOSS HP</span><span>${fmt(sub.bossHp)} / ${fmt(sub.bossMax)}</span></div>
+      <p class="b-flavor">“${esc(def.flavor)}”</p>
+      <div class="boss-actions">
+        <button class="btn solid" data-action="boss-study" data-s="${subId}">${icon('timer')} Study vs Boss</button>
+        <button class="btn ${examUsed ? 'ghost' : ''}" data-action="boss-exam" data-s="${subId}" ${examUsed ? 'disabled' : ''}>${icon('bolt')} Record Exam −100 HP</button>
+      </div>
+      <p class="pray-note" style="text-align:center;margin-top:12px">${examUsed ? 'Exam already recorded against this Boss today.' : 'Defeat rewards +200 XP · +100 Coins. A stronger tier always returns.'}</p>
+    </div>`);
+}
+
+/* ---------- inventory tab ---------- */
+function renderInventory(){
+  const cats = Object.keys(ITEMS);
+  const freezeCard = `
+    <div class="item r-rare">
+      <div class="ivis" style="color:#9fd0dd">${icon('snow','ic-lg')}</div>
+      <div class="i-name">Streak Freeze</div>
+      <div class="i-rar c">Consumable</div>
+      <div class="i-desc">Protects your streak for one missed day. Carry up to 3. You hold ${S.streak.freezes}.</div>
+      <div class="i-foot"><span class="i-cost">${icon('coin','ic-sm')} 150</span>
+        <button class="btn mini" data-action="buy" data-id="freeze">Buy</button></div>
+    </div>`;
+  const card = it => {
+    const owned = S.inv.owned.includes(it.id);
+    const equipped = S.inv.equipped[it.cat] === it.id;
+    const locked = it.cost == null && !owned;
+    return `
+    <div class="item r-${it.rarity} ${equipped ? 'equipped' : ''}">
+      <div class="ivis">${itemVisual(it)}</div>
+      <div class="i-name">${esc(it.name)}</div>
+      <div class="i-rar">${RARITY[it.rarity]} · ${ITEMS[it.cat].label.replace(/s$/,'')}</div>
+      <div class="i-desc">${esc(it.desc || '')}</div>
+      <div class="i-foot">
+        ${owned
+          ? `<button class="btn mini ${equipped ? 'ghost' : 'solid'}" data-action="equip" data-id="${it.id}">
+               ${equipped ? icon('check','ic-sm') + ' Equipped' : 'Equip'}</button>`
+          : locked
+            ? `<span class="i-lock">${icon('lock','ic-sm')} ${esc(it.lock || '')}</span>`
+            : `<span class="i-cost">${icon('coin','ic-sm')} ${fmt(it.cost)}</span>
+               <button class="btn mini" data-action="buy" data-id="${it.id}" ${S.player.coins < it.cost ? 'disabled' : ''}>Buy</button>`}
+      </div>
+    </div>`;
+  };
+  $('#tab-inventory').innerHTML = `
+    <div class="subtabs">
+      <button class="subtab ${InvTab==='vault'?'on':''}" data-action="inv-tab" data-id="vault">Vault — Owned</button>
+      <button class="subtab ${InvTab==='merchant'?'on':''}" data-action="inv-tab" data-id="merchant">Merchant — Shop</button>
+    </div>
+    ${InvTab === 'vault'
+      ? cats.map(c => {
+          const ownedItems = ITEMS[c].list.filter(i => S.inv.owned.includes(i.id));
+          if (!ownedItems.length) return '';
+          return `<div class="panel"><div class="phd">${icon(c==='pet'?'paw':c==='title'?'crown':'shield')}<h2>${ITEMS[c].label}</h2></div>
+            <div class="igrid">${ownedItems.map(card).join('')}</div></div>`;
+        }).join('')
+      : `<div class="panel"><div class="phd">${icon('coin')}<h2>Merchant</h2><span class="right">you hold ${fmt(S.player.coins)} coins</span></div>
+          <div class="igrid">${freezeCard}${cats.map(c => ITEMS[c].list.map(card).join('')).join('')}</div></div>`}`;
+}
+
+/* ---------- profile tab ---------- */
+function renderProfile(){
+  const p = S.player, eq = S.inv.equipped;
+  const cats = ['weapon','outfit','pet','aura','background','title'];
+  const achievementsHTML = ACHIEVEMENTS.map(a => {
+    const un = !!S.achievements[a.id];
+    return `
+    <div class="ach ${un ? 'unlocked' : 'locked'}">
+      <div class="a-ic">${icon(un ? a.icon : 'lock')}</div>
+      <div><b>${un ? esc(a.name) : '???'}</b><span>${esc(a.desc)}</span></div>
+    </div>`;
+  }).join('');
+  $('#tab-profile').innerHTML = `
+    <div class="panel framed cut">
+      <div class="phd">${icon('user')}<h2>Character</h2></div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+        ${avatarHTML(120)}
+        <div style="flex:1;min-width:220px">
+          <div class="h-name" style="font-size:24px">${esc(p.name || 'MEGO')}</div>
+          <div class="h-title">${eq.title && itemDef(eq.title) ? `<span class="dia"></span>${esc(itemDef(eq.title).name)}<span class="dia"></span>` : ''}</div>
+          <div class="statgrid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">
+            <div class="stat"><b>${p.level}</b><span>Level</span></div>
+            <div class="stat"><b>${fmt(p.totalXp)}</b><span>Total XP</span></div>
+            <div class="stat"><b>${fmt(p.coins)}</b><span>Coins</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="custom-grid" style="margin-top:18px">
+        ${cats.map(c => {
+          const owned = ITEMS[c].list.filter(i => S.inv.owned.includes(i.id));
+          if (!owned.length) return '';
+          return `<div class="cust-row"><span class="lbl">${ITEMS[c].label}</span>
+            ${owned.map(i => `<button class="pill ${eq[c]===i.id?'on':''}" data-action="equip" data-id="${i.id}">${esc(i.name)}</button>`).join('')}
+          </div>`;
+        }).join('')}
+        <div class="cust-row"><span class="lbl">More</span><button class="btn mini ghost" data-action="tab" data-tab="inventory">Open Merchant</button></div>
+      </div>
+    </div>
+
+    <div class="panel"><div class="phd">${icon('bolt')}<h2>Player Stats</h2></div>
+      <div class="statgrid">
+        <div class="stat"><b>${S.streak.current}</b><span>Current Streak</span></div>
+        <div class="stat"><b>${S.streak.best}</b><span>Longest Streak</span></div>
+        <div class="stat"><b>${fmt(S.stats.quests)}</b><span>Total Quests</span></div>
+        <div class="stat"><b>${fmtH(S.stats.studySec)}</b><span>Study Time</span></div>
+        <div class="stat"><b>${fmt(S.stats.bosses)}</b><span>Bosses Defeated</span></div>
+        <div class="stat"><b>${fmt(S.stats.prayers)}</b><span>Prayers Observed</span></div>
+        <div class="stat"><b>${fmt(S.stats.workouts)}</b><span>Workouts</span></div>
+        <div class="stat"><b>${fmt(S.stats.perfectDays || 0)}</b><span>Perfect Days</span></div>
+      </div>
+    </div>
+
+    <div class="panel"><div class="phd">${icon('trophy')}<h2>Achievements</h2><span class="right">${Object.keys(S.achievements).length} / ${ACHIEVEMENTS.length}</span></div>
+      <div class="achgrid">${achievementsHTML}</div>
+    </div>
+
+    <div class="panel"><div class="phd">${icon('gear')}<h2>Settings</h2></div>
+      <div class="setrow">
+        <div class="s-info"><b>Hero Name</b><span>What the realm calls you</span></div>
+        <input type="text" id="set-name" maxlength="16" value="${esc(p.name)}" aria-label="Hero name">
+        <button class="btn mini" data-action="name-save">Save</button>
+      </div>
+      <div class="setrow">
+        <div class="s-info"><b>Sound Effects</b><span>Synthesized chimes for quests, coins and victories</span></div>
+        <button class="switch ${S.settings.sound ? 'on' : ''}" data-action="toggle-sound" role="switch" aria-checked="${S.settings.sound}" aria-label="Sound effects"><i></i></button>
+      </div>
+      <div class="setrow">
+        <div class="s-info"><b>Streak Reminders</b><span>In-app evening nudge when today's required quest is still open</span></div>
+        <button class="switch ${S.settings.reminders ? 'on' : ''}" data-action="toggle-remind" role="switch" aria-checked="${S.settings.reminders}" aria-label="Streak reminders"><i></i></button>
+      </div>
+      <div class="setrow">
+        <div class="s-info"><b>Export Data</b><span>Download your full save as JSON</span></div>
+        <button class="btn mini ghost" data-action="export">${icon('export','ic-sm')} Export</button>
+      </div>
+      <div class="setrow">
+        <div class="s-info"><b>Import Data</b><span>Restore a save file (replaces current progress)</span></div>
+        <button class="btn mini ghost" data-action="import">${icon('import','ic-sm')} Import</button>
+      </div>
+      <div class="setrow">
+        <div class="s-info"><b style="color:#eb9d95">Reset Progress</b><span>Permanently erases all local game data</span></div>
+        <button class="btn mini danger" data-action="reset-ask">${icon('reset','ic-sm')} Reset</button>
+      </div>
+    </div>`;
+}
+
+/* ---------- chrome (sidebar / topbar / nav) ---------- */
+const NAV = [
+  { id:'home', ic:'home', label:'Home' },
+  { id:'quests', ic:'swords', label:'Quests' },
+  { id:'prayer', ic:'mosque', label:'Prayer' },
+  { id:'bosses', ic:'skull', label:'Bosses' },
+  { id:'inventory', ic:'pack', label:'Gear' },
+  { id:'profile', ic:'user', label:'Profile' },
+];
+function renderChrome(){
+  const p = S.player;
+  const title = eq_title_name();
+  $('#side-prof').innerHTML = `
+    <div class="sideprof">
+      <div class="sp-ava">${avatarHTML(58)}</div>
+      <div class="sp-body">
+        <div class="sp-name">${esc(p.name || 'MEGO')}</div>
+        <div class="sp-title">${esc(title || '—')}</div>
+        <div class="h-xp"><div class="bar thin"><i style="width:${Math.min(100, p.xp / xpNeed(p.level) * 100)}%"></i></div></div>
+        <div class="bartxt" style="margin-top:3px">LV ${p.level} · ${fmt(p.xp)}/${fmt(xpNeed(p.level))}</div>
+      </div>
+    </div>`;
+  $('#snav').innerHTML = NAV.map(n =>
+    `<button class="nlink ${CUR===n.id?'on':''}" data-action="tab" data-tab="${n.id}">${icon(n.ic)}${n.label}</button>`).join('');
+  $('#bnavrow').innerHTML = NAV.map(n =>
+    `<button class="bnav-b ${CUR===n.id?'on':''}" data-action="tab" data-tab="${n.id}" aria-label="${n.label}">${icon(n.ic)}<span>${n.label}</span></button>`).join('');
+  $('#sf-frz').textContent = S.streak.freezes;
+  $('#sf-coin').textContent = fmt(p.coins);
+  $('#sf-strk').textContent = S.streak.current;
+  $('#tb-strk').textContent = S.streak.current;
+  $('#tb-coin').textContent = fmt(p.coins);
+  $('#tb-snd').innerHTML = icon(S.settings.sound ? 'vol' : 'volx');
+  Timer.chip();
+}
+const eq_title_name = () => { const t = itemDef(S.inv.equipped.title); return t ? t.name : ''; };
+function renderAll(){
+  renderChrome();
+  ({ home:renderHome, quests:renderQuests, prayer:renderPrayer, bosses:renderBosses, inventory:renderInventory, profile:renderProfile })[CUR]();
+}
+function switchTab(id){
+  CUR = id; Sfx.ui();
+  $$('.tab').forEach(t => t.classList.remove('on'));
+  $('#tab-' + id).classList.add('on');
+  window.scrollTo({ top:0 });
+  renderAll();
+}
+
+/* ---------- intro (first run) ---------- */
+function showIntro(){
+  const el = $('#intro');
+  el.innerHTML = `
+    <div>
+      <div class="in-brand"><b>MEGO</b><span>R P G</span></div>
+      <div class="in-tag"><span class="dia"></span>STUDY · PRAY · LEVEL UP<span class="dia"></span></div>
+      <div class="m-body" style="text-align:center;max-width:340px;margin:0 auto 22px">Your real life is the game world. Study damages Bosses. Prayer builds consistency. Streaks forge legends.</div>
+      <input type="text" id="intro-name" maxlength="16" placeholder="Name your hero" aria-label="Hero name">
+      <br><button class="btn solid" data-action="intro-begin" style="margin-top:14px;padding:12px 34px">Begin the Journey</button>
+      <p class="in-hint">Your progress is saved locally on this device.</p>
+    </div>`;
+  el.classList.add('on');
+}
+
+/* ---------------- actions / events ---------------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action]');
+  if (!b) return;
+  const a = b.dataset.action;
+  switch (a){
+    case 'tab': switchTab(b.dataset.tab); break;
+    case 'sound': case 'toggle-sound':
+      S.settings.sound = !S.settings.sound; save(); renderChrome();
+      toast(`Sound effects <b>${S.settings.sound ? 'ON' : 'OFF'}</b>`, '', S.settings.sound ? 'vol' : 'volx');
+      if (S.settings.sound) Sfx.coin();
+      if (CUR === 'profile') renderAll();
+      break;
+    case 'toggle-remind':
+      S.settings.reminders = !S.settings.reminders; save();
+      toast(`Streak reminders <b>${S.settings.reminders ? 'ON' : 'OFF'}</b>`); renderAll(); break;
+    case 'modal-close': closeModal(); break;
+    case 'confirm-ok': { const cb = ConfirmCb; ConfirmCb = null; closeModal(); if (cb) cb(); break; }
+    case 'lvlup-close': $('#lvlup').classList.remove('on'); renderAll(); break;
+    case 'reminder-dismiss': S.today.reminderDismissed = true; save(); renderAll(); break;
+
+    case 'session-open': Timer.open(); break;
+    case 'session-subj': Timer.pickSubj(b.dataset.id); break;
+    case 'session-dur': Timer.pickDur(Number(b.dataset.id)); break;
+    case 'session-start': Timer.start(); break;
+    case 'session-pause': Timer.running ? Timer.pause() : Timer.resume(); break;
+    case 'session-abort': Timer.abort(); break;
+    case 'timerchip': Timer.open(); break;
+
+    case 'quest-log': logManual(b.dataset.id, b); break;
+    case 'quest-challenge': openChallenge(); break;
+
+    case 'prayer': togglePrayer(b.dataset.p, b); break;
+    case 'boss-open': openBoss(b.dataset.s); break;
+    case 'boss-study': closeModal(); Timer.open(b.dataset.s); break;
+    case 'boss-exam': {
+      const s = b.dataset.s;
+      if (S.today.exams[s]) break;
+      S.today.exams[s] = true; S.stats.quests++;
+      closeModal();
+      toast('<b>Exam recorded</b> — the Boss reels.', 'gold', 'bolt');
+      gainXP(50); addCoins(25);
+      damageBoss(s, 100, b);
+      checkAchievements(); break;
+    }
+
+    case 'inv-tab': InvTab = b.dataset.id; renderInventory(); break;
+    case 'buy': buyItem(b.dataset.id, b); break;
+    case 'equip': equipItem(b.dataset.id); break;
+
+    case 'name-save': {
+      const v = ($('#set-name').value || '').trim();
+      S.player.name = v || 'MEGO'; save(); renderAll();
+      toast(`The realm now knows you as <b style="color:var(--gold2)">${esc(S.player.name)}</b>.`); break;
+    }
+    case 'export': {
+      const blob = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
+      const u = URL.createObjectURL(blob);
+      const aEl = document.createElement('a');
+      aEl.href = u; aEl.download = 'mego-rpg-save.json'; aEl.click();
+      setTimeout(()=>URL.revokeObjectURL(u), 500);
+      toast('Save exported.', 'gold', 'export'); break;
+    }
+    case 'import': $('#importfile').click(); break;
+    case 'reset-ask':
+      confirmModal({
+        title:'Reset All Progress', ic:'reset', danger:true, ok:'Reset',
+        body:'<b style="color:#eb9d95">This will permanently erase your local game data</b> — level, XP, coins, streaks, bosses, inventory and achievements. There is no undo.',
+        onOk(){ localStorage.removeItem(KEY); location.reload(); },
+      });
+      break;
+    case 'intro-begin': {
+      const v = ($('#intro-name').value || '').trim();
+      S.player.name = v || 'MEGO'; S.seenIntro = true;
+      save(); $('#intro').classList.remove('on'); renderAll();
+      toast(`Welcome, <b style="color:var(--gold2)">${esc(S.player.name)}</b>. 100 starting coins added. Your journey begins.`, 'gold', 'gem');
+      break;
+    }
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ closeModal(); const l = $('#lvlup'); if (l.classList.contains('on')){ l.classList.remove('on'); renderAll(); } }
+});
+ $('#importfile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if (!d || !d.player) throw 0;
+      confirmModal({
+        title:'Import Save', ic:'import', danger:true, ok:'Import & Replace',
+        body:'This replaces your current progress with the imported file. Continue?',
+        onOk(){ S = d; handleNewDay(); save(); renderAll(); toast('Save imported. Welcome back.', 'gold', 'import'); },
+      });
+    }catch(err){ toast('That file is not a valid MEGO save.', 'red', 'x'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+/* ---------------- init ---------------- */
+function checkReminderTick(){
+  // overnight / long-idle watchdog: re-evaluate the date and reminders
+  handleNewDay();
+  if (S.settings.reminders && new Date().getHours() >= 17 && !streakKeeperDone() && !S.today.reminderDismissed && CUR === 'home') renderHome();
+}
+(function init(){
+  if (!loadSave()){ S = freshState(); save(); }
+  handleNewDay();
+  save();
+  renderAll();
+  if (!S.seenIntro) showIntro();
+  setInterval(checkReminderTick, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden){ handleNewDay(); save(); renderAll(); }
+  });
+})();
+</script>
+</body>
+</html>
