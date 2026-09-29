@@ -26,7 +26,6 @@ body{
   background:var(--bg); color:var(--txt); font-family:var(--fb); font-size:15px; line-height:1.5;
   min-height:100vh; overflow-x:hidden;
 }
-/* subtle vignette + grain, kept very quiet */
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.55) 100%);}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
@@ -150,7 +149,6 @@ nav.snav{display:flex;flex-direction:column;gap:3px}
 .h-title{display:flex;align-items:center;font-size:11px;letter-spacing:.26em;color:var(--gold);text-transform:uppercase;margin:4px 0 14px}
 .h-lvrow{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
 .h-lvrow b{font-family:var(--fd);font-size:13px;letter-spacing:.2em;color:var(--dim)}
-.h-lvrow b b2{color:var(--gold2)}
 .h-lvrow .lvnum{font-family:var(--fd);font-weight:800;font-size:26px;color:var(--gold2)}
 .h-xp{display:flex;align-items:center;gap:10px}
 .h-xp .bar{flex:1;max-width:340px}
@@ -370,7 +368,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold)}
 </head>
 <body>
 
-<!-- ======== SVG ICON SPRITE (hand-drawn) ======== -->
+<!-- ======== SVG ICON SPRITE ======== -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <defs>
 <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h4.5V15h3v5H18V9.5"/></symbol>
@@ -458,10 +456,14 @@ input[type=text]:focus{outline:none;border-color:var(--gold)}
 <script>
 'use strict';
 /* ============================================================
-   MEGO RPG — GAME SCRIPT
-   Modules: Utils · Data · Storage · DayLoop · Sfx · Fx ·
-            Systems (XP/Quests/Prayer/Streak/Boss/Inv/Ach) ·
-            Timer · Renderers · Router · Init
+   MEGO RPG — GAME SCRIPT (v1.2)
+   v1.2 — THE REAL shop fix:
+   The v1.0 crash was NOT a scoping issue at heart — items stored
+   in ITEMS.<cat>.list carry no ".cat" property, so any card
+   renderer reading it.cat crashed. All inventory rendering now
+   iterates ALL_ITEMS (every entry guaranteed to have .cat).
+   Also added an error shield: any runtime error now shows a
+   visible message instead of a silent black screen.
    ============================================================ */
 
 /* ---------------- utils ---------------- */
@@ -484,7 +486,7 @@ const fmtH = sec => `${Math.floor(sec/3600)}h ${Math.floor(sec%3600/60)}m`;
 /* ---------------- static data ---------------- */
 const SUBJECTS = [
   { id:'arabic',  name:'Arabic',         icon:'scroll',   boss:'THE GRAMMAR KING',   flavor:'Every rule mastered is a crown reclaimed.' },
-  { id:'english', name:'English',        icon:'book',     boss:'THE WORD MASTER',    flavor:' Vocabulary is ammunition. Load it well.' },
+  { id:'english', name:'English',        icon:'book',     boss:'THE WORD MASTER',    flavor:'Vocabulary is ammunition. Load it well.' },
   { id:'math',    name:'Mathematics',    icon:'divide',   boss:'THE FINAL EQUATION', flavor:'It watches. It waits. Solve it.' },
   { id:'science', name:'Science',        icon:'flask',    boss:'MAD SCIENTIST',      flavor:'His experiments end where your curiosity begins.' },
   { id:'social',  name:'Social Studies', icon:'compass',  boss:'THE EXPLORER',       flavor:'Maps of the old world chart your path forward.' },
@@ -522,11 +524,11 @@ const MILESTONES = [
 ];
 
 const PRAYERS = [
-  { id:'fajr',    name:'Fajr',    ar:'Fajr' },
-  { id:'dhuhr',   name:'Dhuhr',   ar:'Dhuhr' },
-  { id:'asr',     name:'Asr',     ar:'Asr' },
-  { id:'maghrib', name:'Maghrib', ar:'Maghrib' },
-  { id:'isha',    name:'Isha',    ar:'Isha' },
+  { id:'fajr',    name:'Fajr',    ar:'الفجر' },
+  { id:'dhuhr',   name:'Dhuhr',   ar:'الظهر' },
+  { id:'asr',     name:'Asr',     ar:'العصر' },
+  { id:'maghrib', name:'Maghrib', ar:'المغرب' },
+  { id:'isha',    name:'Isha',    ar:'العشاء' },
 ];
 
 const RARITY = { common:'Common', rare:'Rare', epic:'Epic', legendary:'Legendary' };
@@ -571,6 +573,7 @@ const ITEMS = {
     { id:'title_grinder',      name:'Legendary Grinder',    rarity:'legendary', cost:null, lock:'100-day streak' },
   ]},
 };
+/* Every item here is guaranteed to carry its category — always render from this list */
 const ALL_ITEMS = Object.entries(ITEMS).flatMap(([cat, g]) => g.list.map(i => ({...i, cat})));
 const itemDef = id => ALL_ITEMS.find(i => i.id === id);
 
@@ -655,7 +658,7 @@ function loadSave(){
     if(!raw) return false;
     const d = JSON.parse(raw);
     if(!d || !d.player) return false;
-    S = Object.assign(freshState(), d);           // shallow patch keeps new fields on old saves
+    S = Object.assign(freshState(), d);
     S.player = Object.assign({ name:'', level:1, xp:0, totalXp:0, coins:0 }, d.player);
     S.settings = Object.assign({ sound:false, reminders:true }, d.settings);
     S.stats = Object.assign({ quests:0, studySec:0, prayers:0, workouts:0, bosses:0, perfectDays:0 }, d.stats);
@@ -666,9 +669,10 @@ function loadSave(){
 /* ---------------- day loop (dates, streak, dailies) ---------------- */
 function handleNewDay(){
   const t = todayStr();
-  if (S.today.date === t) return;
+  if (S.today.date === t) return false;
   const prev = S.today;
-  const gap = daysBetween(prev.date, t);          // 1 = consecutive, 2 = one missed day, ...
+  const gap = daysBetween(prev.date, t);
+  if (gap < 0) return false;                      // clock rolled back — keep the day as-is
   if (gap >= 1){
     if (prev.requiredDone && gap === 1){
       S.streak.current++;
@@ -690,6 +694,7 @@ function handleNewDay(){
   S.prayerHist = Object.fromEntries(dates.map(d => [d, hist[d]]));
   S.today = freshToday();
   save();
+  return true;
 }
 function grantMilestones(){
   for (const m of MILESTONES){
@@ -704,6 +709,8 @@ function grantMilestones(){
 }
 const prayerCount = () => Object.values(S.today.prayers).filter(Boolean).length;
 const streakKeeperDone = () => !!(S.today.quests.study25 && S.today.quests.study25.done);
+const reminderDueNow = () =>
+  S.settings.reminders && new Date().getHours() >= 17 && !streakKeeperDone() && !S.today.reminderDismissed;
 
 /* ---------------- audio (synthesized, off by default) ---------------- */
 const Sfx = {
@@ -775,19 +782,21 @@ function confirmModal({ title, body, ok='Confirm', danger=false, ic='gear', onOk
 
 /* ---------------- core economy ---------------- */
 const xpNeed = lvl => 100 + (lvl - 1) * 50;
-let LevelQueue = 0, LevelCoins = 0;
+let LevelCoins = 0;
 
 function gainXP(n, srcEl){
   if (n <= 0) return;
   S.player.xp += n; S.player.totalXp += n;
   floatText(srcEl, `+${n} XP`);
+  let leveled = false;
   while (S.player.xp >= xpNeed(S.player.level)){
     S.player.xp -= xpNeed(S.player.level);
     S.player.level++;
-    LevelQueue++; LevelCoins += 50;
+    LevelCoins += 50;
     S.player.coins += 50;
+    leveled = true;
   }
-  if (LevelQueue > 0){ showLevelUp(); Sfx.level(); }
+  if (leveled){ showLevelUp(); Sfx.level(); }
   save(); renderAll();
 }
 function addCoins(n, srcEl){
@@ -804,12 +813,12 @@ function showLevelUp(){
     <div class="lvl-in">
       <div class="lvl-cap">New height reached</div>
       <div class="lvl-word">Level Up</div>
-      <div class="lvl-num">${S.player.level - LevelQueue + 1 <= 0 ? S.player.level : S.player.level}</div>
+      <div class="lvl-num">${S.player.level}</div>
       <div class="lvl-rew">+${LevelCoins} Coins &nbsp;·&nbsp; Level ${S.player.level}</div>
       <button class="btn solid" data-action="lvlup-close">Continue</button>
     </div>`;
   root.classList.add('on');
-  LevelQueue = 0; LevelCoins = 0;
+  LevelCoins = 0;
 }
 
 /* ---------------- quests ---------------- */
@@ -872,11 +881,15 @@ function togglePrayer(pid, srcEl){
     S.stats.prayers++;
     gainXP(5, srcEl);
     Sfx.ui();
-    if (prayerCount() === 5) addQuestProgress('prayers5', 5, srcEl);
-    else addQuestProgress('prayers5', 0, srcEl); // progress derives from count
   } else {
     S.stats.prayers = Math.max(0, S.stats.prayers - 1);
     Sfx.ui();
+  }
+  // keep the 5-prayers quest progress in sync with the actual count
+  const pq = qget('prayers5');
+  if (!pq.done){
+    pq.p = prayerCount();
+    if (pq.p >= 5) completeQuest('prayers5', srcEl); else save();
   }
   save(); renderAll();
 }
@@ -903,7 +916,7 @@ function defeatBoss(subId){
   openModal(`
     <div class="boss-big" style="color:#e6d9c5">
       <div class="m-title" style="justify-content:center">${icon('trophy')}Boss Defeated</div>
-      ${sigilSVG(subId, 'big')}
+      ${sigilSVG(subId)}
       <div class="b-name" style="font-size:19px">${esc(def.boss)}</div>
       <p class="b-flavor">“Impressive. But I do not die — I return, stronger.”</p>
       <div class="lvl-rew" style="color:var(--gold2)">+200 XP &nbsp;·&nbsp; +100 Coins</div>
@@ -911,8 +924,7 @@ function defeatBoss(subId){
       <div class="m-actions" style="justify-content:center"><button class="btn solid" data-action="modal-close">Stand Victorious</button></div>
     </div>`);
   gainXP(200); addCoins(100);
-  const ach = ACHIEVEMENTS.find(a => a.id === 'slayer');
-  if (!S.achievements.slayer && !S.inv.owned.includes('title_bossy')) S.inv.owned.push('title_bossy');
+  if (!S.inv.owned.includes('title_bossy')) S.inv.owned.push('title_bossy');
   checkAchievements(); save();
 }
 
@@ -933,15 +945,14 @@ function checkAchievements(){
 
 /* ---------------- inventory / shop ---------------- */
 function buyItem(id, srcEl){
-  const it = itemDef(id); if (!it) return;
   if (id === 'freeze'){
-    if (S.streak.freezes >= 3) return toast('You can carry at most 3 Streak Freezes.', '', 'snow');
-    if (S.player.coins < 150) return toast('Not enough coins.', 'red', 'coin');
+    if (S.streak.freezes >= 3){ Sfx.ui(); return toast('You can carry at most 3 Streak Freezes.', '', 'snow'); }
+    if (S.player.coins < 150){ Sfx.ui(); return toast('Not enough coins.', 'red', 'coin'); }
     S.player.coins -= 150; S.streak.freezes++;
-    addCoins(0, srcEl);
     toast('<b>Streak Freeze</b> purchased.', 'gold', 'snow');
-    save(); renderAll(); return;
+    Sfx.coin(); save(); renderAll(); return;
   }
+  const it = itemDef(id); if (!it) return;
   if (S.inv.owned.includes(id)) return;
   if (it.cost == null){ Sfx.ui(); return toast(`Locked — ${esc(it.lock || 'unavailable')}.`, '', 'lock'); }
   if (S.player.coins < it.cost){ Sfx.ui(); return toast('Not enough coins. Quests await.', 'red', 'coin'); }
@@ -970,13 +981,12 @@ const Timer = {
   subj:null, mins:0, endAt:0, left:0, running:false, armed:false, iv:null,
   C: 2 * Math.PI * 80,
   open(preSub){
-    if (this.running){ this.renderModal(); return; }
+    if (this.running || this.left > 0){ this.renderModal(); return; }
     this.subj = preSub || this.subj || SUBJECTS[0].id;
     this.mins = this.mins || 25;
     this.renderModal();
   },
   renderModal(){
-    const sub = this.subj;
     openModal(`
       <div class="m-title">${icon('timer')}Study Session</div>
       ${this.running || this.left > 0 ? `
@@ -993,7 +1003,7 @@ const Timer = {
         </div>` : `
         <div class="m-body">Choose a subject and a duration. Completing the session earns XP, advances the subject, and strikes its Boss.</div>
         <div class="pickgrid">${SUBJECTS.map(s => `
-          <button class="pickb ${s.id===sub?'on':''}" data-action="session-subj" data-id="${s.id}">${icon(s.icon)}${esc(s.name)}</button>`).join('')}
+          <button class="pickb ${s.id===this.subj?'on':''}" data-action="session-subj" data-id="${s.id}">${icon(s.icon)}${esc(s.name)}</button>`).join('')}
         </div>
         <div class="dursegs">${[25,50,90].map(m => `
           <button class="btn ${m===this.mins?'solid':'ghost'}" data-action="session-dur" data-id="${m}">${m} min<br><small style="text-transform:none;letter-spacing:0">+${SESSION_XP[m]} XP</small></button>`).join('')}
@@ -1024,7 +1034,7 @@ const Timer = {
   abort(){
     if (!this.armed){ this.armed = true; this.renderModal(); return; }
     clearInterval(this.iv); this.running = false; this.left = 0; this.armed = false;
-    closeModal(); renderChrome();
+    closeModal(); renderChrome(); Timer.chip();
     toast('Session abandoned. No judgment — begin again when ready.', '', 'reset');
   },
   tick(){
@@ -1168,7 +1178,7 @@ function renderHome(){
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const remaining = ALL_QUESTS().filter(d => !qget(d.id).done).length;
   const pc = prayerCount();
-  const reminderDue = S.settings.reminders && hour >= 17 && !streakKeeperDone() && !S.today.reminderDismissed;
+  const reminderDue = reminderDueNow();
   const title = (S.inv.equipped.title && itemDef(S.inv.equipped.title)) ? itemDef(S.inv.equipped.title).name : '';
   const bg = BG_ART[S.inv.equipped.background] || BG_ART.bg_grove;
 
@@ -1180,7 +1190,7 @@ function renderHome(){
         <div class="h-id">
           <div class="h-name">${esc(p.name || 'MEGO')}</div>
           ${title ? `<div class="h-title"><span class="dia"></span>${esc(title)}<span class="dia"></span></div>` : ''}
-          <div class="h-lvrow"><b>LEVEL <b2>${p.level}</b2></b><span class="lvnum fd">${fmt(p.xp)}<span style="font-size:14px;color:var(--dim)"> / ${fmt(xpNeed(p.level))} XP</span></span></div>
+          <div class="h-lvrow"><b>LEVEL <span style="color:var(--gold2)">${p.level}</span></b><span class="lvnum fd">${fmt(p.xp)}<span style="font-size:14px;color:var(--dim)"> / ${fmt(xpNeed(p.level))} XP</span></span></div>
           <div class="h-xp"><div class="bar"><i style="width:${Math.min(100, p.xp / xpNeed(p.level) * 100)}%"></i></div></div>
         </div>
         <div class="h-stats">
@@ -1307,7 +1317,7 @@ function openBoss(subId){
   const sub = S.subjects[subId];
   const examUsed = !!S.today.exams[subId];
   openModal(`
-    <div class="boss-big" id="boss-view" style="color:#d8cdb4">
+    <div class="boss-big" style="color:#d8cdb4">
       ${sigilSVG(subId)}
       <div class="b-name" style="font-size:19px">${esc(def.boss)}${sub.bossTier>1 ? ' <span style="color:var(--red)">'+ROMAN[Math.min(sub.bossTier-1,9)]+'</span>' : ''}</div>
       <div class="b-subj">${esc(def.name)} · Subject Level ${1 + Math.floor(sub.xp/150)} · ${fmt(sub.xp % 150)}/150 XP</div>
@@ -1324,7 +1334,7 @@ function openBoss(subId){
 
 /* ---------- inventory tab ---------- */
 function renderInventory(){
-  const cats = Object.keys(ITEMS);
+  const CAT_ICON = { weapon:'swords', outfit:'user', pet:'paw', aura:'sparkle', background:'gem', title:'crown' };
   const freezeCard = `
     <div class="item r-rare">
       <div class="ivis" style="color:#9fd0dd">${icon('snow','ic-lg')}</div>
@@ -1332,17 +1342,19 @@ function renderInventory(){
       <div class="i-rar c">Consumable</div>
       <div class="i-desc">Protects your streak for one missed day. Carry up to 3. You hold ${S.streak.freezes}.</div>
       <div class="i-foot"><span class="i-cost">${icon('coin','ic-sm')} 150</span>
-        <button class="btn mini" data-action="buy" data-id="freeze">Buy</button></div>
+        <button class="btn mini" data-action="buy" data-id="freeze" ${S.streak.freezes >= 3 ? 'disabled' : ''}>Buy</button></div>
     </div>`;
+  /* IMPORTANT: only render items coming from ALL_ITEMS — each carries a guaranteed .cat */
   const card = it => {
     const owned = S.inv.owned.includes(it.id);
     const equipped = S.inv.equipped[it.cat] === it.id;
     const locked = it.cost == null && !owned;
+    const catLabel = ITEMS[it.cat] ? ITEMS[it.cat].label.replace(/s$/,'') : '';
     return `
     <div class="item r-${it.rarity} ${equipped ? 'equipped' : ''}">
       <div class="ivis">${itemVisual(it)}</div>
       <div class="i-name">${esc(it.name)}</div>
-      <div class="i-rar">${RARITY[it.rarity]} · ${ITEMS[it.cat].label.replace(/s$/,'')}</div>
+      <div class="i-rar">${RARITY[it.rarity]}${catLabel ? ' · ' + catLabel : ''}</div>
       <div class="i-desc">${esc(it.desc || '')}</div>
       <div class="i-foot">
         ${owned
@@ -1361,14 +1373,14 @@ function renderInventory(){
       <button class="subtab ${InvTab==='merchant'?'on':''}" data-action="inv-tab" data-id="merchant">Merchant — Shop</button>
     </div>
     ${InvTab === 'vault'
-      ? cats.map(c => {
-          const ownedItems = ITEMS[c].list.filter(i => S.inv.owned.includes(i.id));
+      ? Object.keys(ITEMS).map(c => {
+          const ownedItems = ALL_ITEMS.filter(i => i.cat === c && S.inv.owned.includes(i.id));
           if (!ownedItems.length) return '';
-          return `<div class="panel"><div class="phd">${icon(c==='pet'?'paw':c==='title'?'crown':'shield')}<h2>${ITEMS[c].label}</h2></div>
+          return `<div class="panel"><div class="phd">${icon(CAT_ICON[c] || 'gem')}<h2>${ITEMS[c].label}</h2></div>
             <div class="igrid">${ownedItems.map(card).join('')}</div></div>`;
         }).join('')
       : `<div class="panel"><div class="phd">${icon('coin')}<h2>Merchant</h2><span class="right">you hold ${fmt(S.player.coins)} coins</span></div>
-          <div class="igrid">${freezeCard}${cats.map(c => ITEMS[c].list.map(card).join('')).join('')}</div></div>`}`;
+          <div class="igrid">${freezeCard}${ALL_ITEMS.map(card).join('')}</div></div>`}`;
 }
 
 /* ---------- profile tab ---------- */
@@ -1465,6 +1477,7 @@ const NAV = [
   { id:'inventory', ic:'pack', label:'Gear' },
   { id:'profile', ic:'user', label:'Profile' },
 ];
+const eq_title_name = () => { const t = itemDef(S.inv.equipped.title); return t ? t.name : ''; };
 function renderChrome(){
   const p = S.player;
   const title = eq_title_name();
@@ -1490,10 +1503,21 @@ function renderChrome(){
   $('#tb-snd').innerHTML = icon(S.settings.sound ? 'vol' : 'volx');
   Timer.chip();
 }
-const eq_title_name = () => { const t = itemDef(S.inv.equipped.title); return t ? t.name : ''; };
+/* Error shield: a failing tab now shows a visible message instead of a silent black screen */
 function renderAll(){
-  renderChrome();
-  ({ home:renderHome, quests:renderQuests, prayer:renderPrayer, bosses:renderBosses, inventory:renderInventory, profile:renderProfile })[CUR]();
+  try { renderChrome(); } catch(err){ console.error(err); }
+  const R = { home:renderHome, quests:renderQuests, prayer:renderPrayer, bosses:renderBosses, inventory:renderInventory, profile:renderProfile };
+  try {
+    R[CUR]();
+  } catch(err){
+    console.error('MEGO render error:', err);
+    $('#tab-' + CUR).innerHTML = `
+      <div class="panel" style="border-color:rgba(208,90,80,.5)">
+        <div class="phd" style="color:var(--red)">${icon('x')}<h2 style="color:#eb9d95">Something broke in this view</h2></div>
+        <p class="m-body" style="font-family:monospace">${esc(err && err.message ? err.message : String(err))}</p>
+        <button class="btn" data-action="reload">Reload App</button>
+      </div>`;
+  }
 }
 function switchTab(id){
   CUR = id; Sfx.ui();
@@ -1538,6 +1562,7 @@ document.addEventListener('click', e => {
     case 'confirm-ok': { const cb = ConfirmCb; ConfirmCb = null; closeModal(); if (cb) cb(); break; }
     case 'lvlup-close': $('#lvlup').classList.remove('on'); renderAll(); break;
     case 'reminder-dismiss': S.today.reminderDismissed = true; save(); renderAll(); break;
+    case 'reload': location.reload(); break;
 
     case 'session-open': Timer.open(); break;
     case 'session-subj': Timer.pickSubj(b.dataset.id); break;
@@ -1560,7 +1585,7 @@ document.addEventListener('click', e => {
       closeModal();
       toast('<b>Exam recorded</b> — the Boss reels.', 'gold', 'bolt');
       gainXP(50); addCoins(25);
-      damageBoss(s, 100, b);
+      damageBoss(s, 100);
       checkAchievements(); break;
     }
 
@@ -1599,7 +1624,18 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape'){ closeModal(); const l = $('#lvlup'); if (l.classList.contains('on')){ l.classList.remove('on'); renderAll(); } }
+  if (e.key === 'Escape'){
+    closeModal();
+    const l = $('#lvlup');
+    if (l.classList.contains('on')){ l.classList.remove('on'); renderAll(); }
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target instanceof Element && e.target.matches('[role="button"]')){
+    e.preventDefault(); e.target.click();
+  }
+  if (e.key === 'Enter' && e.target instanceof HTMLInputElement){
+    if (e.target.id === 'intro-name'){ const btn = document.querySelector('[data-action="intro-begin"]'); if (btn) btn.click(); }
+    if (e.target.id === 'set-name'){ const btn = document.querySelector('[data-action="name-save"]'); if (btn) btn.click(); }
+  }
 });
  $('#importfile').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
@@ -1618,22 +1654,34 @@ document.addEventListener('keydown', e => {
   r.readAsText(f);
   e.target.value = '';
 });
+/* Global error shield — future errors appear as a toast, never a silent black screen */
+window.addEventListener('error', e => {
+  try{ toast('Error: ' + esc(e.message || 'unknown'), 'red', 'x'); }catch(_){}
+});
 
 /* ---------------- init ---------------- */
+let ReminderShown = null;
 function checkReminderTick(){
-  // overnight / long-idle watchdog: re-evaluate the date and reminders
-  handleNewDay();
-  if (S.settings.reminders && new Date().getHours() >= 17 && !streakKeeperDone() && !S.today.reminderDismissed && CUR === 'home') renderHome();
+  const dayChanged = handleNewDay();
+  const due = reminderDueNow();
+  if (dayChanged || due !== ReminderShown){
+    ReminderShown = due;
+    if (CUR === 'home') renderAll();
+  }
 }
 (function init(){
   if (!loadSave()){ S = freshState(); save(); }
   handleNewDay();
   save();
   renderAll();
+  ReminderShown = reminderDueNow();
   if (!S.seenIntro) showIntro();
   setInterval(checkReminderTick, 30000);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden){ handleNewDay(); save(); renderAll(); }
+    if (!document.hidden){
+      if (handleNewDay()) renderAll();
+      else renderChrome();
+    }
   });
 })();
 </script>
